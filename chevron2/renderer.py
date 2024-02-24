@@ -77,13 +77,7 @@ def _get_key(key, scopes, warn, keep, def_ldel, def_rdel):
             if scope in (0, False):
                 return scope
 
-            try:
-                # This allows for custom falsy data types
-                # https://github.com/noahmorrison/chevron/issues/35
-                if scope._CHEVRON_return_scope_when_falsy:
-                    return scope
-            except AttributeError:
-                return scope or ''
+            return scope or ''
         except (AttributeError, KeyError, IndexError, ValueError):
             # We couldn't find the key in the current scope
             # We'll try again on the next pass

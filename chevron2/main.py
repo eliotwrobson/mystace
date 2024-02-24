@@ -10,7 +10,8 @@ except (ValueError, SystemError):  # python 2
     from renderer import render
     from metadata import version
 
-
+# TODO replace this argparse with jsonargparse
+# https://github.com/omni-us/jsonargparse/tree/v4.27.5
 def main(template, data=None, **kwargs):
     with io.open(template, 'r', encoding='utf-8') as template_file:
         yaml_loader = kwargs.pop('yaml_loader', None) or 'SafeLoader'

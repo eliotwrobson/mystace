@@ -69,7 +69,7 @@ def _get_key(key, scopes, warn: bool, keep: bool, def_ldel, def_rdel) -> str:
         sys.stderr.write("Could not find key '%s'%s" % (key, linesep))
 
     if keep:
-        return "%s %s %s" % (def_ldel, key, def_rdel)
+        return f"{def_ldel} {key} {def_rdel}"
 
     return ""
 

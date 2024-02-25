@@ -55,7 +55,8 @@ def cli_main():
 
     parser = argparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument("-v", "--version", action="version", version=version)
+    # TODO fix the version thing
+    parser.add_argument("-v", "--version", action="version", version=1.0)
 
     parser.add_argument("template", help="The mustache file", type=is_file_or_pipe)
 

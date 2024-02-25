@@ -6,8 +6,6 @@ import typing as t
 from collections.abc import Iterator, Sequence
 from os import linesep, path
 
-import typing_extensions as te
-
 from .tokenizer import tokenize
 
 #

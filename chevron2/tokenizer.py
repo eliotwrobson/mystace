@@ -45,7 +45,7 @@ def l_sa_check(template, literal, is_standalone):
 
 
 def r_sa_check(template, tag_type, is_standalone):
-    """Do a final checkto see if a tag could be a standalone"""
+    """Do a final check to see if a tag could be a standalone"""
 
     # Check right side if we might be a standalone
     if is_standalone and tag_type not in ['variable', 'no escape']:

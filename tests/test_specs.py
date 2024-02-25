@@ -54,6 +54,7 @@
 import os
 from pathlib import Path
 import json
+import chevron2
 
 def test_spec_from_folder(datadir: Path) -> None:
 
@@ -63,8 +64,11 @@ def test_spec_from_folder(datadir: Path) -> None:
         with test_path.open() as test_file:
             test_obj = json.load(test_file)
 
+        for test_case in test_obj["tests"]:
+            print(dir(chevron2))
+            result = chevron2.renderer.render(test_case['template'], test_case['data'], partials_dict=test_case.get('partials', {}))
+            print(result)
 
-
-        print(test_obj["__ATTN__"])
+        print()
         break
     assert False

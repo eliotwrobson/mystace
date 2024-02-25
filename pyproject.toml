@@ -5,18 +5,16 @@ description = "A revised version of Chevron, for rendering mustache templates in
 authors = ["Eliot Robson <eliot.robson24@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [
-    {include = "chevron2", from = "src"}
-]
+packages = [{ include = "chevron2", from = "src" }]
 #TODO version classifiers may not be needed.
-classifiers=[
-    "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Text Processing :: Markup"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Text Processing :: Markup",
 ]
 
 [tool.poetry.dependencies]
@@ -43,9 +41,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = "tests"
-required_plugins = [
-  "pytest-datadir"
-]
+required_plugins = ["pytest-benchmark", "pytest-datadir"]
 
 [tool.flake8]
 # Black compatibility
@@ -60,8 +56,5 @@ profile = "black"
 python_version = "3.8"
 
 [[tool.mypy.overrides]]
-module = [
-  "yaml",
-  "chevron"
-]
+module = ["yaml", "chevron"]
 ignore_missing_imports = true

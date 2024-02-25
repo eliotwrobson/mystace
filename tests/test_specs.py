@@ -10,7 +10,6 @@ import json
 from pathlib import Path
 
 from chevron2.renderer import render
-from chevron2.tokenizer import ChevronError
 
 # Names of tests to skip for now that fail, TODO debug these.
 # Not a huuuuuge deal, since most of the failed ones are in the optional section

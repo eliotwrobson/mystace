@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import importlib.metadata
+
 import io
 import sys
 from importlib.metadata import version

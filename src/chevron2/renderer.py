@@ -184,7 +184,7 @@ def render(
             # Otherwise make a generator
             tokens = tokenize(template, def_ldel, def_rdel)
 
-    output = ""
+    output = []
 
     if scopes is None:
         scopes = [data]
@@ -211,7 +211,7 @@ def render(
             # Add padding to the key and add it to the output
             if not isinstance(key, str):  # python 2
                 key = key
-            output += key.replace("\n", "\n" + padding)
+            output.append(key.replace("\n", "\n" + padding))
 
         # If we're a variable tag
         elif tag == "variable":
@@ -226,7 +226,7 @@ def render(
                 thing = scopes[1]
             if not isinstance(thing, str):
                 thing = str(thing)
-            output += _html_escape(thing)
+            output.append(_html_escape(thing))
 
         # If we're a no html escape tag
         elif tag == "no escape":
@@ -236,7 +236,7 @@ def render(
             )
             if not isinstance(thing, str):
                 thing = str(thing)
-            output += thing
+            output.append(thing)
 
         # If we're a section tag
         elif tag == "section":
@@ -298,7 +298,7 @@ def render(
                     ),
                 )
 
-                output += rend
+                output.append(rend)
 
             # If the scope is a sequence, an iterator or generator but not
             # derived from a string
@@ -336,7 +336,7 @@ def render(
                         keep=keep,
                     )
 
-                    output += rend
+                    output.append(rend)
 
             else:
                 # Otherwise we're just a scope section
@@ -356,7 +356,9 @@ def render(
             partial = _get_partial(key, partials_dict, partials_path, partials_ext)
 
             # Find what to pad the partial with
-            left = output.rpartition("\n")[2]
+            # TODO find a way to avoid this join!!!
+            left = ("".join(output)).rpartition("\n")[2]
+
             part_padding = padding
             if left.isspace():
                 part_padding += left
@@ -381,6 +383,6 @@ def render(
                 part_out = part_out.rstrip(" \t")
 
             # Add the partials output to the ouput
-            output += part_out
+            output.append(part_out)
 
-    return output
+    return "".join(output)

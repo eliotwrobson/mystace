@@ -14,6 +14,10 @@
     "--profile",
     "black"
   ],
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml",
+    "editor.formatOnSave": true
+  },
   "[json]": {
     "editor.formatOnSave": true
   },

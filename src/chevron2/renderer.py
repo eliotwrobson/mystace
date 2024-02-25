@@ -28,7 +28,7 @@ def _html_escape(string: str) -> str:
     return string
 
 
-def _get_key(key, scopes, warn: bool, keep: bool, def_ldel, def_rdel) -> str:
+def _get_key(key, scopes, warn: bool, keep: bool, def_ldel: str, def_rdel: str) -> str:
     """Get a key from the current scope"""
 
     # If the key is a dot
@@ -210,8 +210,6 @@ def render(
         # If we're a literal tag
         elif tag == "literal":
             # Add padding to the key and add it to the output
-            if not isinstance(key, str):  # python 2
-                key = key
             output.append(key.replace("\n", "\n" + padding))
 
         # If we're a variable tag

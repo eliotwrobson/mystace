@@ -6,5 +6,6 @@
       "ms-python.python",
       "ms-python.vscode-pylance",
       "attilabuti.mustache-syntax-vscode",
+      "tamasfe.even-better-toml"
     ]
   }

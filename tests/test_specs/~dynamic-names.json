@@ -31,8 +31,7 @@
     {
       "name": "Context Misses - Partial",
       "desc": "Failed context lookups should be considered falsey.",
-      "data": {
-      },
+      "data": {},
       "template": "\"{{>*missing}}\"",
       "partials": {
         "missing": "Hello, world!"
@@ -139,10 +138,7 @@
       "desc": "Dotted names should not push a new frame on the context stack.",
       "data": {
         "value": "test",
-        "section1": [
-          1,
-          2
-        ],
+        "section1": [1, 2],
         "section2": {
           "dynamic": "partial",
           "value": "section2"
@@ -158,10 +154,7 @@
       "name": "Dotted names - Context Stacking Failed Lookup",
       "desc": "Dotted names should resolve against the proper context stack.",
       "data": {
-        "section1": [
-          1,
-          2
-        ],
+        "section1": [1, 2],
         "section2": {
           "dynamic": "partial",
           "value": "section2"
@@ -182,9 +175,7 @@
         "nodes": [
           {
             "content": "Y",
-            "nodes": [
-
-            ]
+            "nodes": []
           }
         ]
       },

@@ -5,8 +5,7 @@
     {
       "name": "Default",
       "desc": "Default content should be rendered if the block isn't overridden",
-      "data": {
-      },
+      "data": {},
       "template": "{{$title}}Default title{{/title}}\n",
       "expected": "Default title\n"
     },
@@ -62,8 +61,7 @@
     {
       "name": "Inherit",
       "desc": "Default content rendered inside inherited templates",
-      "data": {
-      },
+      "data": {},
       "template": "{{<include}}{{/include}}\n",
       "partials": {
         "include": "{{$foo}}default content{{/foo}}"
@@ -73,8 +71,7 @@
     {
       "name": "Overridden content",
       "desc": "Overridden content",
-      "data": {
-      },
+      "data": {},
       "template": "{{<super}}{{$title}}sub template title{{/title}}{{/super}}",
       "partials": {
         "super": "...{{$title}}Default title{{/title}}..."
@@ -108,8 +105,7 @@
     {
       "name": "Overridden parent",
       "desc": "Overridden parent",
-      "data": {
-      },
+      "data": {},
       "template": "test {{<parent}}{{$stuff}}override{{/stuff}}{{/parent}}",
       "partials": {
         "parent": "{{$stuff}}...{{/stuff}}"
@@ -119,8 +115,7 @@
     {
       "name": "Two overridden parents",
       "desc": "Two overridden parents with different content",
-      "data": {
-      },
+      "data": {},
       "template": "test {{<parent}}{{$stuff}}override1{{/stuff}}{{/parent}} {{<parent}}{{$stuff}}override2{{/stuff}}{{/parent}}\n",
       "partials": {
         "parent": "|{{$stuff}}...{{/stuff}}{{$default}} default{{/default}}|"
@@ -130,8 +125,7 @@
     {
       "name": "Override parent with newlines",
       "desc": "Override parent with newlines",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{$ballmer}}\npeaked\n\n:(\n{{/ballmer}}{{/parent}}",
       "partials": {
         "parent": "{{$ballmer}}peaking{{/ballmer}}"
@@ -141,8 +135,7 @@
     {
       "name": "Inherit indentation",
       "desc": "Inherit indentation when overriding a parent",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{$nineties}}hammer time{{/nineties}}{{/parent}}",
       "partials": {
         "parent": "stop:\n  {{$nineties}}collaborate and listen{{/nineties}}\n"
@@ -152,8 +145,7 @@
     {
       "name": "Only one override",
       "desc": "Override one parameter but not the other",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{$stuff2}}override two{{/stuff2}}{{/parent}}",
       "partials": {
         "parent": "{{$stuff}}new default one{{/stuff}}, {{$stuff2}}new default two{{/stuff2}}"
@@ -163,8 +155,7 @@
     {
       "name": "Parent template",
       "desc": "Parent templates behave identically to partials when called with no parameters",
-      "data": {
-      },
+      "data": {},
       "template": "{{>parent}}|{{<parent}}{{/parent}}",
       "partials": {
         "parent": "{{$foo}}default content{{/foo}}"
@@ -174,8 +165,7 @@
     {
       "name": "Recursion",
       "desc": "Recursion in inherited templates",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{$foo}}override{{/foo}}{{/parent}}",
       "partials": {
         "parent": "{{$foo}}default content{{/foo}} {{$bar}}{{<parent2}}{{/parent2}}{{/bar}}",
@@ -186,8 +176,7 @@
     {
       "name": "Multi-level inheritance",
       "desc": "Top-level substitutions take precedence in multi-level inheritance",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{$a}}c{{/a}}{{/parent}}",
       "partials": {
         "parent": "{{<older}}{{$a}}p{{/a}}{{/older}}",
@@ -199,8 +188,7 @@
     {
       "name": "Multi-level inheritance, no sub child",
       "desc": "Top-level substitutions take precedence in multi-level inheritance",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{/parent}}",
       "partials": {
         "parent": "{{<older}}{{$a}}p{{/a}}{{/older}}",
@@ -212,8 +200,7 @@
     {
       "name": "Text inside parent",
       "desc": "Ignores text inside parent templates, but does parse $ tags",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}} asdfasd {{$foo}}hmm{{/foo}} asdfasdfasdf {{/parent}}",
       "partials": {
         "parent": "{{$foo}}default content{{/foo}}"
@@ -223,8 +210,7 @@
     {
       "name": "Text inside parent",
       "desc": "Allows text inside a parent tag, but ignores it",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}} asdfasd asdfasdfasdf {{/parent}}",
       "partials": {
         "parent": "{{$foo}}default content{{/foo}}"
@@ -249,8 +235,7 @@
     {
       "name": "Standalone parent",
       "desc": "A parent's opening and closing tags need not be on separate lines in order to be standalone",
-      "data": {
-      },
+      "data": {},
       "template": "Hi,\n  {{<parent}}{{/parent}}\n",
       "partials": {
         "parent": "one\ntwo\n"
@@ -260,8 +245,7 @@
     {
       "name": "Standalone block",
       "desc": "A block's opening and closing tags need not be on separate lines in order to be standalone",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{$block}}\none\ntwo{{/block}}\n{{/parent}}\n",
       "partials": {
         "parent": "Hi,\n  {{$block}}{{/block}}\n"
@@ -271,8 +255,7 @@
     {
       "name": "Block reindentation",
       "desc": "Block indentation is removed at the site of definition and added at the site of expansion",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{$block}}\n    one\n    two\n{{/block}}{{/parent}}\n",
       "partials": {
         "parent": "Hi,\n  {{$block}}\n  {{/block}}\n"
@@ -282,8 +265,7 @@
     {
       "name": "Intrinsic indentation",
       "desc": "When the block opening tag is standalone, indentation is determined by default content",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{$block}}\none\ntwo\n{{/block}}{{/parent}}\n",
       "partials": {
         "parent": "Hi,\n{{$block}}\n  default\n{{/block}}\n"
@@ -293,8 +275,7 @@
     {
       "name": "Nested block reindentation",
       "desc": "Nested blocks are reindented relative to the surrounding block",
-      "data": {
-      },
+      "data": {},
       "template": "{{<parent}}{{$nested}}\nthree\n{{/nested}}{{/parent}}\n",
       "partials": {
         "parent": "{{<grandparent}}{{$block}}\n  one\n  {{$nested}}\n    two\n  {{/nested}}\n{{/block}}{{/grandparent}}\n",

@@ -138,6 +138,8 @@ def parse_tag(
 
 
 def template_to_string(template: TemplateType) -> str:
+    # TODO maybe improvable with this:
+    # https://stackoverflow.com/a/38569536
     if hasattr(template, "read"):
         return str(template.read())  # type: ignore
 

@@ -51,9 +51,20 @@
 #         spec = spec.split('.')[0]
 #         globals()[spec] = _test_case_from_path(os.path.join(SPECS_PATH, spec))
 
+import os
+from pathlib import Path
+import json
+
+def test_spec_from_folder(datadir: Path) -> None:
+
+    for test_path in datadir.iterdir():
+        print(test_path, type(test_path))
+
+        with test_path.open() as test_file:
+            test_obj = json.load(test_file)
 
 
 
-def test_spec_from_folder(datadir) -> None:
-    print(datadir)
+        print(test_obj["__ATTN__"])
+        break
     assert False

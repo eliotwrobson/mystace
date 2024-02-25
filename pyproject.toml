@@ -3,7 +3,11 @@ name = "chevron2"
 version = "0.1.0"
 description = "A revised version of Chevron, for rendering mustache templates in Python"
 authors = ["Eliot Robson <eliot.robson24@gmail.com>"]
+license = "MIT"
 readme = "README.md"
+packages = [
+    {include = "chevron2", from = "src"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"

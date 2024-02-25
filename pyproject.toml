@@ -8,6 +8,7 @@ readme = "README.md"
 packages = [
     {include = "chevron2", from = "src"}
 ]
+#TODO version classifiers may not be needed.
 classifiers=[
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: MIT License",

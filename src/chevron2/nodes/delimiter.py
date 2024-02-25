@@ -1,10 +1,10 @@
-from combustache.exceptions import DelimiterError
-from combustache.nodes.node import Node
+from chevron2.exceptions import DelimiterError
+from chevron2.nodes.node import Node
 
 
 class Delimiter(Node):
-    left = '='
-    right = '='
+    left = "="
+    right = "="
     ignorable = True
 
     def __init__(
@@ -31,8 +31,7 @@ class Delimiter(Node):
         split = self.content.split()
         if len(split) != 2:
             raise DelimiterError(
-                'Impossible delimiter tag found '
-                f'{self.presentable} at {self.start}.'
+                "Impossible delimiter tag found " f"{self.presentable} at {self.start}."
             )
         self.left_delimiter = split[0]
         self.right_delimiter = split[1]

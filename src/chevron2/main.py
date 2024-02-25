@@ -148,7 +148,7 @@ def _render(
 
 def render(
     template: str,
-    data: dict,
+    data: dict | None = None,
     partials: dict[str, str] | None = None,
     left_delimiter: str = "{{",
     right_delimiter: str = "}}",
@@ -180,6 +180,9 @@ def render(
         MissingClosingTagError: Missing closing tag.
         StrayClosingTagError: Stray closing tag.
     """
+    if data is None:
+        data = {}
+
     opts = {
         "stringify": stringify,
         "escape": escape,

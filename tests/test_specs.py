@@ -9,7 +9,7 @@ https://github.com/mustache/spec
 import json
 from pathlib import Path
 
-from chevron2.renderer import render
+from chevron2 import render
 
 # Names of tests to skip for now that fail, TODO debug these.
 # Not a huuuuuge deal, since most of the failed ones are in the optional section
@@ -90,7 +90,7 @@ def test_spec_from_folder(datadir: Path) -> None:
             result = render(
                 test_case["template"],
                 test_case["data"],
-                partials_dict=test_case.get("partials", {}),
+                partials=test_case.get("partials", {}),
             )
 
             assert result == test_case["expected"], full_test_case_name

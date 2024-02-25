@@ -235,7 +235,7 @@ def render(
                 key, scopes, warn=warn, keep=keep, def_ldel=def_ldel, def_rdel=def_rdel
             )
             if not isinstance(thing, str):
-                thing = str(thing), "utf-8"
+                thing = str(thing)
             output += thing
 
         # If we're a section tag

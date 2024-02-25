@@ -6,6 +6,8 @@ import typing as t
 from collections.abc import Iterator, Sequence
 from os import linesep, path
 
+import typing_extensions as te
+
 from .tokenizer import tokenize
 
 #
@@ -252,12 +254,13 @@ def render(
                 # Generate template text from tags
                 text = ""
                 tags = []
-                for tag in tokens:
-                    if tag == ("end", key):
+                # te.reveal_type(tag)
+                for tag_pair in tokens:
+                    if tag_pair == ("end", key):
                         break
 
-                    tags.append(tag)
-                    tag_type, tag_key = tag
+                    tags.append(tag_pair)
+                    tag_type, tag_key = tag_pair
                     if tag_type == "literal":
                         text += tag_key
                     elif tag_type == "no escape":
@@ -310,14 +313,14 @@ def render(
                 # TODO: This feels like it still has edge cases, no?
                 tags = []
                 tags_with_same_key = 0
-                for tag in tokens:
-                    if tag == ("section", key):
+                for tag_pair in tokens:
+                    if tag_pair == ("section", key):
                         tags_with_same_key += 1
-                    if tag == ("end", key):
+                    if tag_pair == ("end", key):
                         tags_with_same_key -= 1
                         if tags_with_same_key < 0:
                             break
-                    tags.append(tag)
+                    tags.append(tag_pair)
 
                 # For every item in the scope
                 for thing in scope:

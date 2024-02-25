@@ -3,12 +3,17 @@
 import typing as t
 
 import chevron
+import combustache
+import moosetash
+import pystache
 import pytest
 from typing_extensions import assert_never
 
 from chevron2.renderer import render
 
-RenderFunctionT = t.Literal["chevron2", "chevron"]
+RenderFunctionT = t.Literal[
+    "chevron2", "chevron", "combustache", "moosetash", "pystache"
+]
 
 
 @pytest.mark.parametrize("render_function_name", t.get_args(RenderFunctionT))
@@ -19,6 +24,12 @@ def test_large(render_function_name: RenderFunctionT, benchmark) -> None:
         render_function = render
     elif render_function_name == "chevron":
         render_function = chevron.render
+    elif render_function_name == "combustache":
+        render_function = combustache.render
+    elif render_function_name == "moosetash":
+        render_function = moosetash.render
+    elif render_function_name == "pystache":
+        render_function = pystache.render
     else:
         assert_never(render_function_name)
 

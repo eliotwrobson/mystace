@@ -5,8 +5,7 @@
     {
       "name": "No Interpolation",
       "desc": "Mustache-free templates should render as-is.",
-      "data": {
-      },
+      "data": {},
       "template": "Hello from {Mustache}!\n",
       "expected": "Hello from {Mustache}!\n"
     },
@@ -130,24 +129,21 @@
     {
       "name": "Basic Context Miss Interpolation",
       "desc": "Failed context lookups should default to empty strings.",
-      "data": {
-      },
+      "data": {},
       "template": "I ({{cannot}}) be seen!",
       "expected": "I () be seen!"
     },
     {
       "name": "Triple Mustache Context Miss Interpolation",
       "desc": "Failed context lookups should default to empty strings.",
-      "data": {
-      },
+      "data": {},
       "template": "I ({{{cannot}}}) be seen!",
       "expected": "I () be seen!"
     },
     {
       "name": "Ampersand Context Miss Interpolation",
       "desc": "Failed context lookups should default to empty strings.",
-      "data": {
-      },
+      "data": {},
       "template": "I ({{&cannot}}) be seen!",
       "expected": "I () be seen!"
     },
@@ -207,8 +203,7 @@
       "name": "Dotted Names - Broken Chains",
       "desc": "Any falsey value prior to the last part of the name should yield ''.",
       "data": {
-        "a": {
-        }
+        "a": {}
       },
       "template": "\"{{a.b.c}}\" == \"\"",
       "expected": "\"\" == \"\""
@@ -218,8 +213,7 @@
       "desc": "Each part of a dotted name should resolve only against its parent.",
       "data": {
         "a": {
-          "b": {
-          }
+          "b": {}
         },
         "c": {
           "name": "Jim"
@@ -261,8 +255,7 @@
       "desc": "Dotted names should be resolved against former resolutions.",
       "data": {
         "a": {
-          "b": {
-          }
+          "b": {}
         },
         "b": {
           "c": "ERROR"

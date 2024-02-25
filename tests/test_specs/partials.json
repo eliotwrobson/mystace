@@ -5,8 +5,7 @@
     {
       "name": "Basic Behavior",
       "desc": "The greater-than operator should expand to the named partial.",
-      "data": {
-      },
+      "data": {},
       "template": "\"{{>text}}\"",
       "partials": {
         "text": "from partial"
@@ -16,11 +15,9 @@
     {
       "name": "Failed Lookup",
       "desc": "The empty string should be used when the named partial is not found.",
-      "data": {
-      },
+      "data": {},
       "template": "\"{{>text}}\"",
-      "partials": {
-      },
+      "partials": {},
       "expected": "\"\""
     },
     {
@@ -43,9 +40,7 @@
         "nodes": [
           {
             "content": "Y",
-            "nodes": [
-
-            ]
+            "nodes": []
           }
         ]
       },
@@ -72,8 +67,7 @@
     {
       "name": "Surrounding Whitespace",
       "desc": "The greater-than operator should not alter surrounding whitespace.",
-      "data": {
-      },
+      "data": {},
       "template": "| {{>partial}} |",
       "partials": {
         "partial": "\t|\t"
@@ -95,8 +89,7 @@
     {
       "name": "Standalone Line Endings",
       "desc": "\"\\r\\n\" should be considered a newline for standalone tags.",
-      "data": {
-      },
+      "data": {},
       "template": "|\r\n{{>partial}}\r\n|",
       "partials": {
         "partial": ">"
@@ -106,8 +99,7 @@
     {
       "name": "Standalone Without Previous Line",
       "desc": "Standalone tags should not require a newline to precede them.",
-      "data": {
-      },
+      "data": {},
       "template": "  {{>partial}}\n>",
       "partials": {
         "partial": ">\n>"
@@ -117,8 +109,7 @@
     {
       "name": "Standalone Without Newline",
       "desc": "Standalone tags should not require a newline to follow them.",
-      "data": {
-      },
+      "data": {},
       "template": ">\n  {{>partial}}",
       "partials": {
         "partial": ">\n>"

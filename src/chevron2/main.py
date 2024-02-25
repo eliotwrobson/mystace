@@ -8,6 +8,7 @@ from importlib.metadata import version
 from .renderer import render
 
 
+# https://github.com/python/typeshed/blob/main/stubs/chevron/chevron/main.pyi
 # TODO replace this argparse with jsonargparse
 # https://github.com/omni-us/jsonargparse/tree/v4.27.5
 def main(template, data=None, **kwargs):

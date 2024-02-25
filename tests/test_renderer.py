@@ -154,7 +154,8 @@ def test_complex():
 
 
 # def test_current_line_rest():
-#     args = {"template": "first line\nsecond line\n {{ foo } bar", "data": {"foo": "xx"}}
+#     args = {"template": "first line\nsecond line\n {{ foo } bar",
+# "data": {"foo": "xx"}}
 
 #     with pytest.raises(Chevron2Error):
 #         render(**args)

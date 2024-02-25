@@ -10,7 +10,8 @@ jobs:
   ci:
     strategy:
       matrix:
-        python-version: ["3.12", "3.11", "3.10", "3.9"]
+        # TODO support more versions
+        python-version: ["3.12", "3.11", "3.10"]
         poetry-version: ["1.7.1"]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}

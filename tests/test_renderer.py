@@ -405,6 +405,8 @@ def test_get_key_not_in_dunder_dict_returns_attribute():
 #     assert result == expected
 
 
+# Tests below from
+# https://github.com/sakhezech/combustache/blob/main/tests/custom/test_bad_template.py
 def test_left_delimiter_eof():
     template = "{{"
     data = {}
@@ -441,3 +443,88 @@ def test_stray_closing_tag():
 
     with pytest.raises(StrayClosingTagError):
         render(template, data)
+
+
+# Tests below from:
+# https://github.com/sakhezech/combustache/blob/main/tests/custom/test_opts.py
+
+
+def test_stringify():
+    template = "This statement is {{bool}}."
+    data = {"bool": True}
+    expected = "This statement is true."
+
+    def lowercase_bool(val):
+        if val is None:
+            return ""
+        if isinstance(val, bool):
+            return str(val).lower()
+        return str(val)
+
+    out = render(template, data, stringify=lowercase_bool)
+    assert out == expected
+
+
+def test_escape():
+    template = "I am escaping quotes: {{quotes}}"
+    data = {"quotes": "\" \" ' '"}
+    expected = r"I am escaping quotes: \" \" \' \'"
+
+    def escape_quotes(string: str) -> str:
+        return string.replace("'", r"\'").replace('"', r"\"")
+
+    out = render(template, data, escape=escape_quotes)
+    assert out == expected
+
+
+def test_missing_data():
+    template = "Location: {{location}}."
+    data = {}
+    expected = "Location: UNKNOWN."
+
+    out = render(template, data, missing_data=lambda: "UNKNOWN")
+    assert out == expected
+
+    def raise_if_missing():
+        raise ValueError("MISSING DATA")
+
+    with pytest.raises(ValueError):
+        out = render(template, data, missing_data=raise_if_missing)
+
+    # None is not missing data
+    data = {"location": None}
+    expected = "Location: ."
+    out = render(template, data, missing_data=lambda: "UNKNOWN")
+    assert out == expected
+
+
+def test_missing_partial():
+    template = "{{>cool_partial}}"
+    data = {"part_of_partial": 321}
+    partials = {}
+    expected = "(Partial failed to load!)"
+
+    out = render(
+        template,
+        data,
+        partials,
+        missing_data=lambda: "(Partial failed to load!)",
+    )
+    assert out == expected
+
+
+def test_missing_section():
+    template = "List of your repos:{{#repos}}\n[{{name}}](url) - {{desc}}{{/repos}}"
+    data = {"repos": []}
+    expected = "List of your repos:"
+    out = render(template, data, missing_data=lambda: " you have no repos :(")
+    assert out == expected
+    data = {"repos": None}
+
+    out = render(template, data, missing_data=lambda: " you have no repos :(")
+    assert out == expected
+
+    data = {}
+    expected = "List of your repos: you have no repos :("
+    out = render(template, data, missing_data=lambda: " you have no repos :(")
+    assert out == expected

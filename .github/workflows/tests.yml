@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -25,6 +26,7 @@ jobs:
       - uses: abatilo/actions-poetry@v2
         with:
           poetry-version: ${{ matrix.poetry-version }}
+
       - name: Install dependencies
         run: poetry install --with dev
 
@@ -32,5 +34,5 @@ jobs:
         run: |
             set -o pipefail
             poetry run pytest --cache-clear --cov | tee pytest-coverage.txt
-        - name: Comment coverage
-          uses: coroo/pytest-coverage-commentator@v1.0.2
+      #- name: Comment coverage
+      #  uses: coroo/pytest-coverage-commentator@v1.0.2

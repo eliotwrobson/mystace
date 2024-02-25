@@ -3,7 +3,7 @@
 import io
 import sys
 import typing as t
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterator, MutableSequence, Sequence
 from os import linesep, path
 
 from .tokenizer import tokenize
@@ -105,18 +105,18 @@ g_token_cache: t.Dict[str, t.List[t.Tuple[str, str]]] = {}
 
 
 def render(
-    template="",
-    data={},
+    template: t.Union[str, Sequence[t.Tuple[str, str]]] = "",
+    data: t.Dict[str, t.Any] = {},
     partials_path=".",
-    partials_ext="mustache",
-    partials_dict={},
-    padding="",
-    def_ldel="{{",
-    def_rdel="}}",
+    partials_ext: str = "mustache",
+    partials_dict: t.Dict[str, str] = {},
+    padding: str = "",
+    def_ldel: str = "{{",
+    def_rdel: str = "}}",
     scopes=None,
-    warn=False,
-    keep=False,
-):
+    warn: bool = False,
+    keep: bool = False,
+) -> str:
     """Render a mustache template.
 
     Renders a mustache template with a data scope and partial capability.
@@ -247,7 +247,7 @@ def render(
 
             # If the scope is a callable (as described in
             # https://mustache.github.io/mustache.5.html)
-            if isinstance(scope, Callable):
+            if callable(scope):
 
                 # Generate template text from tags
                 text = ""

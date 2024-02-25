@@ -1,3 +1,8 @@
+import os
+import typing as t
+
+TemplateType = t.Union[str, os.PathLike]
+
 # Globals
 _CURRENT_LINE = 1
 _LAST_TAG_LINE = None
@@ -12,7 +17,7 @@ class ChevronError(SyntaxError):
 #
 
 
-def grab_literal(template, l_del):
+def grab_literal(template: str, l_del: t.Optional[str]) -> t.Tuple[str, str]:
     """Parse a literal from the template"""
 
     global _CURRENT_LINE
@@ -25,11 +30,13 @@ def grab_literal(template, l_del):
 
     # There are no more tags in the template?
     except ValueError:
-        # Then the rest of the template is a literal
-        return (template, "")
+        pass
+
+    # Then the rest of the template is a literal
+    return (template, "")
 
 
-def l_sa_check(template, literal, is_standalone):
+def l_sa_check(template: str, literal: str, is_standalone: bool) -> bool:
     """Do a preliminary check to see if a tag could be a standalone"""
 
     # If there is a newline, or the previous tag was a standalone
@@ -44,8 +51,11 @@ def l_sa_check(template, literal, is_standalone):
             # Otherwise it can't be
             return False
 
+    # Relies on output being "falsy"
+    return False
 
-def r_sa_check(template, tag_type, is_standalone):
+
+def r_sa_check(template: str, tag_type: str, is_standalone: bool) -> bool:
     """Do a final check to see if a tag could be a standalone"""
 
     # Check right side if we might be a standalone
@@ -63,7 +73,9 @@ def r_sa_check(template, tag_type, is_standalone):
         return False
 
 
-def parse_tag(template, l_del, r_del):
+def parse_tag(
+    template: str, l_del: t.Optional[str], r_del: t.Optional[str]
+) -> t.Tuple[t.Tuple[str, str], str]:
     """Parse a tag from a template"""
     global _CURRENT_LINE
     global _LAST_TAG_LINE
@@ -125,7 +137,16 @@ def parse_tag(template, l_del, r_del):
 #
 
 
-def tokenize(template, def_ldel="{{", def_rdel="}}"):
+def template_to_string(template: TemplateType) -> str:
+    if hasattr(template, "read"):
+        return str(template.read())  # type: ignore
+
+    return str(template)
+
+
+def tokenize(
+    template: TemplateType, def_ldel: str = "{{", def_rdel: str = "}}"
+) -> t.Generator[t.Tuple[str, str], None, None]:
     """Tokenize a mustache template
 
     Tokenizes a mustache template in a generator fashion,
@@ -165,31 +186,34 @@ def tokenize(template, def_ldel="{{", def_rdel="}}"):
     global _CURRENT_LINE, _LAST_TAG_LINE
     _CURRENT_LINE = 1
     _LAST_TAG_LINE = None
-    # If the template is a file-like object then read it
-    try:
-        template = template.read()
-    except AttributeError:
-        pass
+
+    template_str = template_to_string(template)
+
+    # # If the template is a file-like object then read it
+    # try:
+    #     template_str = template_str.read()
+    # except AttributeError:
+    #     pass
 
     is_standalone = True
     open_sections = []
     l_del = def_ldel
     r_del = def_rdel
 
-    while template:
-        literal, template = grab_literal(template, l_del)
+    while template_str:
+        literal, template_str = grab_literal(template_str, l_del)
 
         # If the template is completed
-        if not template:
+        if not template_str:
             # Then yield the literal and leave
             yield ("literal", literal)
             break
 
         # Do the first check to see if we could be a standalone
-        is_standalone = l_sa_check(template, literal, is_standalone)
+        is_standalone = l_sa_check(template_str, literal, is_standalone)
 
         # Parse the tag
-        tag, template = parse_tag(template, l_del, r_del)
+        tag, template_str = parse_tag(template_str, l_del, r_del)
         tag_type, tag_key = tag
 
         # Special tag logic
@@ -227,12 +251,12 @@ def tokenize(template, def_ldel="{{", def_rdel="}}"):
                 )
 
         # Do the second check to see if we're a standalone
-        is_standalone = r_sa_check(template, tag_type, is_standalone)
+        is_standalone = r_sa_check(template_str, tag_type, is_standalone)
 
         # Which if we are
         if is_standalone:
             # Remove the stuff before the newline
-            template = template.split("\n", 1)[-1]
+            template_str = template_str.split("\n", 1)[-1]
 
             # Partials need to keep the spaces on their left
             if tag_type != "partial":

@@ -30,7 +30,7 @@ def _html_escape(string: str) -> str:
     return string
 
 
-def _get_key(key, scopes, warn, keep, def_ldel, def_rdel):
+def _get_key(key, scopes, warn: bool, keep: bool, def_ldel, def_rdel) -> str:
     """Get a key from the current scope"""
 
     # If the key is a dot
@@ -76,7 +76,7 @@ def _get_key(key, scopes, warn, keep, def_ldel, def_rdel):
     return ""
 
 
-def _get_partial(name, partials_dict, partials_path, partials_ext):
+def _get_partial(name: str, partials_dict, partials_path, partials_ext) -> str:
     """Load a partial"""
     try:
         # Maybe the partial is in the dictionary

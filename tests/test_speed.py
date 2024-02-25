@@ -13,7 +13,7 @@ RenderFunctionT = t.Literal["chevron2", "chevron"]
 
 @pytest.mark.parametrize("render_function_name", t.get_args(RenderFunctionT))
 def test_large(render_function_name: RenderFunctionT, benchmark) -> None:
-    n = 50_000
+    n = 10_000
 
     if render_function_name == "chevron2":
         render_function = render

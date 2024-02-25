@@ -1,0 +1,69 @@
+{
+  "__ATTN__": "Indexing tests adapted from https://github.com/sakhezech/combustache/blob/main/tests/custom/indexing.yml",
+  "overview": "You should be able to index into lists.",
+  "tests": [
+    {
+      "name": "Indexing",
+      "desc": "Indexing should work",
+      "data": {
+        "list": ["here", "there", "outside", "inside"]
+      },
+      "template": "I am {{list.0}}",
+      "expected": "I am here"
+    },
+    {
+      "name": "Indexing - Chain",
+      "desc": "Indexing should let you chain further",
+      "data": {
+        "list": [
+          { "content": "bye" },
+          { "content": "hello" },
+          { "content": "bye" },
+          { "content": "bye" }
+        ]
+      },
+      "template": "{{list.1.content}} is a greeting",
+      "expected": "hello is a greeting"
+    },
+    {
+      "name": "Indexing - Outside",
+      "desc": "Indexing outside the list should interpolate as an empty string",
+      "data": {
+        "list": ["one", "two", "three"]
+      },
+      "template": "nothing -> {{list.3}}",
+      "expected": "nothing -> "
+    },
+    {
+      "name": "Indexing - Reverse",
+      "desc": "Indexing with a negative number should index from the end",
+      "data": {
+        "list": ["one", "two", "three"]
+      },
+      "template": "the last item is {{list.-1}}",
+      "expected": "the last item is three"
+    },
+    {
+      "name": "Indexing - Chain indexing",
+      "desc": "Chained indexing should work",
+      "data": {
+        "list": [
+          ["wrong", "wrong", "correct"],
+          ["wrong", "wrong", "wrong"],
+          ["wrong", "wrong", "wrong"]
+        ]
+      },
+      "template": "i am {{list.0.2}}",
+      "expected": "i am correct"
+    },
+    {
+      "name": "Indexing - Escape",
+      "desc": "Escaping should work correctly",
+      "data": {
+        "list": [">", "&", "<"]
+      },
+      "template": "{{{list.0}}} == {{&list.0}} == > != {{list.0}}",
+      "expected": "> == > == > != &gt;"
+    }
+  ]
+}

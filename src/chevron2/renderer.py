@@ -3,7 +3,7 @@
 import io
 import sys
 import typing as t
-from collections.abc import Callable, Iterator, MutableSequence, Sequence
+from collections.abc import Iterator, Sequence
 from os import linesep, path
 
 from .tokenizer import tokenize

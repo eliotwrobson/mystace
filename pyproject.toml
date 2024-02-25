@@ -8,6 +8,15 @@ readme = "README.md"
 packages = [
     {include = "chevron2", from = "src"}
 ]
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing :: Markup"
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"

@@ -15,19 +15,18 @@ from .tokenizer import tokenize
 #
 
 
-def _html_escape(string):
-    """HTML escape all of these " & < >"""
+def _html_escape(string: str) -> str:
+    """HTML escape all of these: " & < >"""
 
-    html_codes = {
-        '"': "&quot;",
-        "<": "&lt;",
-        ">": "&gt;",
-    }
+    html_code_pairs = [
+        ("&", "&amp;"),  # & must be handled first
+        ('"', "&quot;"),
+        ("<", "&lt;"),
+        (">", "&gt;"),
+    ]
 
-    # & must be handled first
-    string = string.replace("&", "&amp;")
-    for char in html_codes:
-        string = string.replace(char, html_codes[char])
+    for char, replacement in html_code_pairs:
+        string = string.replace(char, replacement)
     return string
 
 
@@ -106,6 +105,8 @@ def _get_partial(name, partials_dict, partials_path, partials_ext):
 g_token_cache: t.Dict[str, t.List[t.Tuple[str, str]]] = {}
 
 
+# TODO I think this can be converted to iterative using a dict,
+# could be substantially faster
 def render(
     template: t.Union[str, Sequence[t.Tuple[str, str]]] = "",
     data: t.Dict[str, t.Any] = {},

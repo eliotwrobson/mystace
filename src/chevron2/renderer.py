@@ -2,6 +2,7 @@
 
 import io
 import sys
+import typing as t
 from collections.abc import Callable, Iterator, Sequence
 from os import linesep, path
 
@@ -114,7 +115,7 @@ def _get_partial(name, partials_dict, partials_path, partials_ext):
 #
 # The main rendering function
 #
-g_token_cache = {}
+g_token_cache: t.Dict[str, t.List[t.Tuple[str, str]]] = {}
 
 
 def render(

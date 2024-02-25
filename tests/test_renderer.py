@@ -9,7 +9,8 @@ import io
 import pytest
 import chevron2
 
-
+# https://stackoverflow.com/questions/29627341/pytest-where-to-store-expected-data
+# https://github.com/mustache/spec
 
 # SPECS_PATH = os.path.join('spec', 'specs')
 # if os.path.exists(SPECS_PATH):
@@ -59,6 +60,7 @@ import chevron2
 
 #### TODO tests above need to be refactored.
 
+def test_
 
 def test_unclosed_sections():
     test1 = {

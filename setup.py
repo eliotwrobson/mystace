@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import chevron.metadata
-
 try:
     from setuptools import setup
 except ImportError:
@@ -12,7 +10,7 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(name='chevron',
-      version=chevron.metadata.version,
+      version="0.1.0",
       license='MIT',
 
       description='Mustache templating language renderer',

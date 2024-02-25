@@ -3,12 +3,7 @@
 import io
 import sys
 
-try:
-    from .renderer import render
-    from .metadata import version
-except (ValueError, SystemError):  # python 2
-    from renderer import render
-    from metadata import version
+from .renderer import render
 
 # TODO replace this argparse with jsonargparse
 # https://github.com/omni-us/jsonargparse/tree/v4.27.5

@@ -12,6 +12,17 @@ from .tokenizer import tokenize
 # Helper functions
 #
 
+TAG_TYPE_TO_STR = {
+    "commment": "!",
+    "section": "#",
+    "inverted section": "^",
+    "end": "/",
+    "partial": ">",
+    "set delimiter": "=",
+    "no escape": "&",
+    "variable": "",
+}
+
 
 def _html_escape(string: str) -> str:
     """HTML escape all of these: " & < >"""
@@ -249,9 +260,9 @@ def render(
             if callable(scope):
 
                 # Generate template text from tags
-                text = ""
+                text_list = []
                 tags = []
-                # te.reveal_type(tag)
+
                 for tag_pair in tokens:
                     if tag_pair == ("end", key):
                         break
@@ -259,25 +270,21 @@ def render(
                     tags.append(tag_pair)
                     tag_type, tag_key = tag_pair
                     if tag_type == "literal":
-                        text += tag_key
+                        text_list.append(tag_key)
                     elif tag_type == "no escape":
-                        text += "%s& %s %s" % (def_ldel, tag_key, def_rdel)
+                        text_list.extend((def_ldel, "& ", tag_key, " ", def_rdel))
                     else:
-                        text += "%s%s %s%s" % (
-                            def_ldel,
-                            {
-                                "commment": "!",
-                                "section": "#",
-                                "inverted section": "^",
-                                "end": "/",
-                                "partial": ">",
-                                "set delimiter": "=",
-                                "no escape": "&",
-                                "variable": "",
-                            }[tag_type],
-                            tag_key,
-                            def_rdel,
+                        text_list.extend(
+                            (
+                                def_ldel,
+                                TAG_TYPE_TO_STR[tag_type],
+                                " ",
+                                tag_key,
+                                def_rdel,
+                            )
                         )
+
+                text = "".join(text_list)
 
                 g_token_cache[text] = tags
 

@@ -4,12 +4,12 @@
 
 A python implementation of the [mustache templating language](http://mustache.github.io).
 
-Why chevron?
+Why chevron2?
 ------------
 
 I'm glad you asked!
 
-### chevron is fast ###
+### chevron2 is fast ###
 
 Chevron runs in less than half the time of [pystache](http://github.com/defunkt/pystache) (Which is not even up to date on the spec).
 And in about 70% the time of [Stache](https://github.com/hyperturtle/Stache) (A 'trimmed' version of mustache, also not spec compliant).
@@ -24,9 +24,6 @@ Chevron passes all the unittests provided by the [spec](https://github.com/musta
 
 If you find a test that chevron does not pass, please [report it.](https://github.com/noahmorrison/chevron/issues/new)
 
-### chevron is Python 2 and 3 compatible ###
-
-Python 2.6, 2.7, 3.2, 3.3, 3.4, 3.5, and 3.6 are all tested by travis.
 
 
 

@@ -1,7 +1,6 @@
 # import random
 
 import copy
-import itertools as it
 import typing as t
 
 import chevron

@@ -186,7 +186,6 @@ def render(
 
     A string containing the rendered template.
     """
-
     # If the template is a seqeuence but not derived from a string
     if isinstance(template, Sequence) and not isinstance(template, string_type):
         # Then we don't need to tokenize it

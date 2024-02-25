@@ -29,4 +29,8 @@ jobs:
         run: poetry install --with dev
 
       - name: Run pytest
-        run: poetry run pytest tests
+        run: |
+            set -o pipefail
+            poetry run pytest --cache-clear --cov | tee pytest-coverage.txt
+        - name: Comment coverage
+          uses: coroo/pytest-coverage-commentator@v1.0.2

@@ -9,10 +9,10 @@ class Ctx(list):
     """
 
     def get(self, key: str) -> Any:
-        if key == '.':
+        if key == ".":
             return self[-1]
 
-        chain = key.split('.')
+        chain = key.split(".")
         reversed_ctx = reversed(self)
 
         found = MISSING

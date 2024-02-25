@@ -57,6 +57,7 @@ def cli_main():
 
     parser = argparse.ArgumentParser(description=__doc__)
 
+    # From https://stackoverflow.com/a/72168209
     parser.add_argument(
         "-v", "--version", action="version", version=version("chevron2")
     )

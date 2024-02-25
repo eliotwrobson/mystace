@@ -91,7 +91,7 @@ import chevron
 args = {
     'template': 'Hello, {{> thing }}!',
 
-    'partials_dict': {
+    'partials': {
         'thing': 'World'
     }
 }

@@ -5,8 +5,7 @@ import collections
 
 import pytest
 
-from chevron2.renderer import render
-from chevron2.tokenizer import ChevronError
+from chevron2 import Chevron2Error, render
 
 
 def test_unclosed_sections():
@@ -14,7 +13,7 @@ def test_unclosed_sections():
 
     test2 = {"template": "{{# section }} end of file"}
 
-    with pytest.raises(ChevronError):
+    with pytest.raises(Chevron2Error):
         render(**test1)
         render(**test2)
 
@@ -50,7 +49,7 @@ def test_unicode_variable():
 def test_unicode_partial():
     args = {
         "template": "{{> table_flip }}",
-        "partials_dict": {"table_flip": "(╯°□°）╯︵ ┻━┻"},
+        "partials": {"table_flip": "(╯°□°）╯︵ ┻━┻"},
     }
 
     result = render(**args)
@@ -62,7 +61,7 @@ def test_unicode_partial():
 def test_missing_key_partial():
     args = {
         "template": "before, {{> with_missing_key }}, after",
-        "partials_dict": {
+        "partials": {
             "with_missing_key": "{{#missing_key}}bloop{{/missing_key}}",
         },
     }
@@ -147,14 +146,14 @@ def test_inverted_coercion():
 def test_closing_tag_only():
     args = {"template": "{{ foo } bar", "data": {"foo": "xx"}}
 
-    with pytest.raises(ChevronError):
+    with pytest.raises(Chevron2Error):
         render(**args)
 
 
 def test_current_line_rest():
     args = {"template": "first line\nsecond line\n {{ foo } bar", "data": {"foo": "xx"}}
 
-    with pytest.raises(ChevronError):
+    with pytest.raises(Chevron2Error):
         render(**args)
 
 
@@ -164,7 +163,7 @@ def test_no_opening_tag():
         "data": {"foo": "xx"},
     }
 
-    with pytest.raises(ChevronError):
+    with pytest.raises(Chevron2Error):
         render(**args)
 
 
@@ -256,7 +255,7 @@ def test_callable_4():
 
     args = {
         "template": "{{#function}}{{>partial}}{{!comment}}{{/function}}",
-        "partials_dict": {
+        "partials": {
             "partial": "partial content",
         },
         "data": {
@@ -282,7 +281,7 @@ def test_nest_loops_with_same_key():
 
 # https://github.com/noahmorrison/chevron/issues/49
 def test_partial_indentation():
-    args = {"template": "\t{{> count }}", "partials_dict": {"count": "\tone\n\ttwo"}}
+    args = {"template": "\t{{> count }}", "partials": {"count": "\tone\n\ttwo"}}
 
     result = render(**args)
     expected = "\t\tone\n\t\ttwo"
@@ -311,7 +310,7 @@ def test_iterator_scope_indentation():
             "thing": ["foo", "bar", "baz"],
         },
         "template": "{{> count }}",
-        "partials_dict": {
+        "partials": {
             "count": "    {{> iter_scope }}",
             "iter_scope": "foobar\n{{#thing}}\n {{.}}\n{{/thing}}",
         },
@@ -387,7 +386,7 @@ def test_keep_from_partials():
             "first": "1st",
             "third": "3rd",
         },
-        "partials_dict": {
+        "partials": {
             "with_missing_key": "{{missing_key}}",
         },
     }

@@ -56,6 +56,7 @@ def cli_main():
     parser = argparse.ArgumentParser(description=__doc__)
 
     # TODO fix the version thing
+    # https://packaging.python.org/en/latest/guides/single-sourcing-package-version/#single-sourcing-the-package-version
     parser.add_argument("-v", "--version", action="version", version=1.0)
 
     parser.add_argument("template", help="The mustache file", type=is_file_or_pipe)

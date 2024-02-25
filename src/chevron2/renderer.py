@@ -181,9 +181,11 @@ def render(
 
     scopes        -- The list of scopes that get_key will look through
 
-    warn          -- Issue a warning to stderr when a template substitution isn't found in the data
+    warn          -- Issue a warning to stderr when a template substitution isn't
+                     found in the data
 
-    keep          -- Keep unreplaced tags when a template substitution isn't found in the data
+    keep          -- Keep unreplaced tags when a template substitution isn't found in
+                     the data
 
 
     Returns:

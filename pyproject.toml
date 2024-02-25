@@ -58,6 +58,7 @@ python_version = "3.8"
 
 [[tool.mypy.overrides]]
 module = [
-  "yaml"
+  "yaml",
+  "chevron"
 ]
 ignore_missing_imports = true

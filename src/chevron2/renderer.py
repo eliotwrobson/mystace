@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import io
+import sys
+from collections.abc import Callable, Iterator, Sequence
 from os import linesep, path
 
-try:
-    from collections.abc import Callable, Iterator, Sequence
-except ImportError:  # python 2
-    from collections import Callable, Iterator, Sequence
-try:
-    from .tokenizer import tokenize
-except (ValueError, SystemError):  # python 2
-    from tokenizer import tokenize
-
-import sys
+from .tokenizer import tokenize
 
 if sys.version_info[0] == 3:
     python3 = True

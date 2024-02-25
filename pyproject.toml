@@ -16,6 +16,12 @@ python = "^3.9"
 pytest = "^8.0.2"
 chevron = "^0.14.0"
 pytest-datadir = "^1.5.0"
+flake8 = "^7.0.0"
+flake8-black = "^0.3.6"
+flake8-isort = "^6.1.1"
+isort = "^5.13.2"
+black = "^24.2.0"
+flake8-pyproject = "^1.2.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -26,3 +32,12 @@ testpaths = "tests"
 required_plugins = [
   "pytest-datadir"
 ]
+
+[tool.flake8]
+# Black compatibility
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+
+# Per <https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#profile>
+[tool.isort]
+profile = "black"

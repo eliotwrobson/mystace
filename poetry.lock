@@ -96,6 +96,20 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytest-datadir"
+version = "1.5.0"
+description = "pytest plugin for test data directories and files"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-datadir-1.5.0.tar.gz", hash = "sha256:1617ed92f9afda0c877e4eac91904b5f779d24ba8f5e438752e3ae39d8d2ee3f"},
+    {file = "pytest_datadir-1.5.0-py3-none-any.whl", hash = "sha256:34adf361bcc7b37961bbc1dfa8d25a4829e778bab461703c38a5c50ca9c36dc8"},
+]
+
+[package.dependencies]
+pytest = ">=5.0"
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -109,4 +123,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "d0e4cfb791fe6d8d046e76fb1faf08b9406436e31c12679049e3d3b4e73213b9"
+content-hash = "b790be44fa72900205371dc2e5d03ed3a4ee12c4311a761150f84a0923e33623"

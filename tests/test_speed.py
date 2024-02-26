@@ -1,6 +1,9 @@
 # import random
 
 import copy
+import cProfile
+import os
+import subprocess
 import typing as t
 
 import chevron
@@ -54,6 +57,7 @@ def test_large(
     render_function_name: RenderFunctionT,
     test_case_generator: TestCaseGeneratorT,
     benchmark,
+    request,
 ) -> None:
     n = 1000
 
@@ -73,7 +77,20 @@ def test_large(
 
     template, names = test_case_generator(n)
 
-    res = benchmark(render_function, template, names)
+    os.makedirs("cprofile_stats", exist_ok=True)
+    my_locals = locals()
+    my_locals["res"] = None
+    cProfile.runctx(
+        "res = benchmark(render_function, template, names)",
+        globals(),
+        my_locals,
+        f"cprofile_stats/{request.node.name}.cprofile",
+    )
+    res = my_locals["res"]
+    subprocess.Popen(
+        f"flameprof cprofile_stats/{request.node.name}.cprofile > cprofile_stats/{request.node.name}.svg",
+        shell=True,
+    )
 
     # Chevron interface is always the reference
     assert res == chevron.render(template, names)

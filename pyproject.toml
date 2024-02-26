@@ -38,6 +38,7 @@ combustache = "^1.0.2"
 moosetash = "^0.2.0"
 pystache = "^0.6.5"
 faker = "^23.2.1"
+flameprof = "^0.4"
 
 [build-system]
 requires = ["poetry-core"]

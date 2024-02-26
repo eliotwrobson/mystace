@@ -3,6 +3,14 @@ from typing import Any
 LAMBDA = "<lambda>"
 
 
+def html_escape(s: str) -> str:
+    s = s.replace("&", "&amp;")  # Must be done first!
+    s = s.replace("<", "&lt;")
+    s = s.replace(">", "&gt;")
+    s = s.replace('"', "&quot;")
+    return s
+
+
 def is_whitespace(string: str) -> bool:
     # ''.isspace() returns False
     # for our purposes if there is nothing after or behind the tag

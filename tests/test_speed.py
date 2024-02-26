@@ -2,8 +2,10 @@
 
 import copy
 import cProfile
+import math
 import os
 import random
+import string
 import subprocess
 import typing as t
 
@@ -53,15 +55,147 @@ def generate_test_case_nested(n: int) -> TestCaseT:
 def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
     assert seed, "A falsey seed leads to nondeterminism"
 
-    def _generate(n: int) -> TestCaseT:
-        """n: the total number of recursive calls to _generate"""
+    # TODO Add two more parameters to generate_test_case_random:
+    # 1) A knob to control template nestedness
+    # 2) A knob to control names nestedness
 
+    def _generate(n: int) -> TestCaseT:
         # Use our own seeded Random object instead of the module's default
         # Random object
         my_random = random.Random(seed)
 
-        template = f"{my_random.randint(0, 9)}"
         names = {}
+
+        def gen_template(n):
+            if n > 0:
+                num_sections = my_random.randint(
+                    math.floor(n ** (1 / 3)), math.ceil(n ** (2 / 3))
+                )
+                num_template_items = my_random.randint(
+                    math.floor(n ** (1 / 3)), math.ceil(n ** (2 / 3))
+                )
+
+                section_sizes = [0] * num_sections
+                for i in range(n - num_template_items):
+                    section_sizes[my_random.randint(0, num_sections - 1)] += 1
+
+                while num_sections or num_template_items:
+                    if (
+                        my_random.randint(0, num_sections + num_template_items - 1)
+                        < num_sections
+                    ):
+                        section_n = section_sizes.pop()
+                        num_sections -= 1
+                        yield from gen_section(section_n)
+                    else:
+                        num_template_items -= 1
+                        yield from gen_template_item()
+
+        def gen_template_item():
+            yield from my_random.choice(
+                [
+                    # gen_partial,
+                    gen_comment,
+                    gen_unescaped_variable_amp,
+                    gen_unescaped_variable,
+                    gen_variable,
+                    gen_verbatim,
+                ]
+            )()
+
+        def gen_section(n):
+            # open section
+            yield whitespace()
+            yield "{{"
+            yield my_random.choice(["#", "^"])
+            yield whitespace()
+            var = variable_name()
+            yield var
+            yield whitespace()
+            yield "}}"
+            yield whitespace()
+
+            yield from gen_template(n - 1)
+
+            # close section
+            yield whitespace()
+            yield "{{/"
+            yield whitespace()
+            yield var
+            yield whitespace()
+            yield "}}"
+            yield whitespace()
+
+        def gen_comment():
+            yield whitespace()
+            yield "{{!"
+            yield whitespace()
+            yield verbatim()
+            yield whitespace()
+            yield "}}"
+            yield whitespace()
+
+        def gen_unescaped_variable():
+            yield whitespace()
+            yield "{{{"
+            yield whitespace()
+            yield variable_name()
+            yield whitespace()
+            yield "}}}"
+            yield whitespace()
+
+        def gen_unescaped_variable_amp():
+            yield whitespace()
+            yield "{{&"
+            yield whitespace()
+            yield variable_name()
+            yield whitespace()
+            yield "}}"
+            yield whitespace()
+
+        def gen_variable():
+            yield whitespace()
+            yield "{{"
+            yield whitespace()
+            yield variable_name()
+            yield whitespace()
+            yield "}}"
+            yield whitespace()
+
+        def variable_name():
+            nonlocal names
+
+            # TODO Currently, this only does top-level names. We will
+            # want to also intelligently use dotted and context-relative
+            # names, in order to get a better idea of performance.
+
+            alphabet = string.ascii_letters
+            var = "".join(
+                my_random.choice(alphabet) for _ in range(my_random.randint(5, 15))
+            )
+
+            names[var] = verbatim()
+
+            return var
+
+        def whitespace():
+            # I planned to use more whitespace characters, but that seems to
+            # causes isues.
+            alphabet = " "
+            return "".join(
+                my_random.choice(alphabet) for _ in range(my_random.randint(0, 3))
+            )
+
+        def verbatim():
+            alphabet = string.ascii_letters + string.digits + " "
+            return "".join(
+                my_random.choice(alphabet) for _ in range(my_random.randint(10, 100))
+            )
+
+        def gen_verbatim():
+            yield verbatim()
+
+        template = "".join(gen_template(n))
         return template, names
 
     return _generate

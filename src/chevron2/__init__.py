@@ -28,10 +28,12 @@ from chevron2.exceptions import (
     StrayClosingTagError,
 )
 from chevron2.main import cache_clear, render
+from chevron2.tokenize import tokenize
 
 __all__ = [
     "render",
     "cache_clear",
+    "tokenize",
     "Chevron2Error",
     "DelimiterError",
     "MissingClosingTagError",

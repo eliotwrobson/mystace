@@ -3,6 +3,7 @@
 import copy
 import cProfile
 import os
+import random
 import subprocess
 import typing as t
 
@@ -49,9 +50,27 @@ def generate_test_case_nested(n: int) -> TestCaseT:
     return _runner(n)
 
 
+def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
+    assert seed, "A falsey seed leads to nondeterminism"
+
+    def _generate(n: int) -> TestCaseT:
+        """n: the total number of recursive calls to _generate"""
+
+        # Use our own seeded Random object instead of the module's default
+        # Random object
+        my_random = random.Random(seed)
+
+        template = f"{my_random.randint(0, 9)}"
+        names = {}
+        return template, names
+
+    return _generate
+
+
 @pytest.mark.parametrize("render_function_name", t.get_args(RenderFunctionT))
 @pytest.mark.parametrize(
-    "test_case_generator", [generate_test_case_nested, generate_test_case_long]
+    "test_case_generator",
+    [generate_test_case_nested, generate_test_case_long, generate_test_case_random(1)],
 )
 def test_large(
     render_function_name: RenderFunctionT,

@@ -199,6 +199,8 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
         template = "".join(gen_template(n))
         return template, names
 
+    _generate.__name__ = f"generate_test_case_random_with_seed_{seed}"
+
     return _generate
 
 

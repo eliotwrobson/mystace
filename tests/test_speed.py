@@ -14,13 +14,14 @@ import combustache
 import moosetash
 import pystache
 import pytest
+import ustache
 from faker import Faker
 from typing_extensions import assert_never
 
 import chevron2
 
 RenderFunctionT = t.Literal[
-    "chevron2", "chevron", "combustache", "moosetash", "pystache"
+    "chevron2", "chevron", "combustache", "moosetash", "pystache", "ustache"
 ]
 TestCaseT = t.Tuple[str, t.Dict[str, int]]
 TestCaseGeneratorT = t.Callable[[int], TestCaseT]
@@ -224,6 +225,8 @@ def test_large(
         # Use the fast mode for this
         render_function = moosetash.render
     elif render_function_name == "pystache":
+        render_function = pystache.render
+    elif render_function_name == "ustache":
         render_function = pystache.render
     else:
         assert_never(render_function_name)

@@ -67,7 +67,44 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
 
         names = {}
 
-        def gen_template(n):
+        def flatten_keys_from_scopes(scopes):
+            def flatten_keys(scope):
+                if scope is None:
+                    return []
+
+                ret = []
+                for k, v in scope.items():
+                    flat = flatten_keys(v)
+                    if flat == []:
+                        flat = [(k, v)]
+                    else:
+                        flat = [(f"{k}.{x}", v) for (x, v) in flat]
+                    ret.extend(flat)
+                return ret
+
+            ret = []
+            for scope in scopes:
+                ret.extend(flatten_keys(scope))
+            return ret
+
+        def randomly_insert_name_into_scope(name, scope, is_section):
+            key = []
+            while True:
+                child = my_random.choice(list(scope.keys()) + [None])
+                if child is None or scope[child] is None:
+                    break
+                else:
+                    key.append(child)
+                    scope = scope[child]
+            if is_section:
+                val = {}
+            else:
+                val = None
+            scope[name] = val
+            key.append(name)
+            return ".".join(key), val
+
+        def gen_template(n, scopes):
             if n > 0:
                 num_sections = my_random.randint(
                     math.floor(n ** (1 / 3)), math.ceil(n ** (2 / 3))
@@ -87,12 +124,12 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
                     ):
                         section_n = section_sizes.pop()
                         num_sections -= 1
-                        yield from gen_section(section_n)
+                        yield from gen_section(section_n, scopes)
                     else:
                         num_template_items -= 1
-                        yield from gen_template_item()
+                        yield from gen_template_item(scopes)
 
-        def gen_template_item():
+        def gen_template_item(scopes):
             yield from my_random.choice(
                 [
                     # gen_partial,
@@ -102,32 +139,34 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
                     gen_variable,
                     gen_verbatim,
                 ]
-            )()
+            )(scopes)
 
-        def gen_section(n):
+        def gen_section(n, scopes):
+            key, val = variable_name(scopes, True)
+            scopes.append(val)
+
             # open section
             yield whitespace()
             yield "{{"
             yield my_random.choice(["#", "^"])
             yield whitespace()
-            var = variable_name()
-            yield var
+            yield key
             yield whitespace()
             yield "}}"
             yield whitespace()
 
-            yield from gen_template(n - 1)
+            yield from gen_template(n - 1, scopes)
 
             # close section
             yield whitespace()
             yield "{{/"
             yield whitespace()
-            yield var
+            yield key
             yield whitespace()
             yield "}}"
             yield whitespace()
 
-        def gen_comment():
+        def gen_comment(scopes):
             yield whitespace()
             yield "{{!"
             yield whitespace()
@@ -136,48 +175,54 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
             yield "}}"
             yield whitespace()
 
-        def gen_unescaped_variable():
+        def gen_unescaped_variable(scopes):
             yield whitespace()
             yield "{{{"
             yield whitespace()
-            yield variable_name()
+            yield variable_name(scopes, False)[0]
             yield whitespace()
             yield "}}}"
             yield whitespace()
 
-        def gen_unescaped_variable_amp():
+        def gen_unescaped_variable_amp(scopes):
             yield whitespace()
             yield "{{&"
             yield whitespace()
-            yield variable_name()
+            yield variable_name(scopes, False)[0]
             yield whitespace()
             yield "}}"
             yield whitespace()
 
-        def gen_variable():
+        def gen_variable(scopes):
             yield whitespace()
             yield "{{"
             yield whitespace()
-            yield variable_name()
+            yield variable_name(scopes, False)[0]
             yield whitespace()
             yield "}}"
             yield whitespace()
 
-        def variable_name():
-            nonlocal names
+        def variable_name(scopes, is_section):
+            use_existing_key = my_random.random() < 0.5
+            if use_existing_key:
+                candidates = [
+                    (k, v)
+                    for (k, v) in flatten_keys_from_scopes(scopes)
+                    if (v is not None) == is_section
+                ]
 
-            # TODO Currently, this only does top-level names. We will
-            # want to also intelligently use dotted and context-relative
-            # names, in order to get a better idea of performance.
+                if len(candidates):
+                    key, val = my_random.choice(candidates)
+                    return key, val
 
             alphabet = string.ascii_letters
-            var = "".join(
+            name = "".join(
                 my_random.choice(alphabet) for _ in range(my_random.randint(5, 15))
             )
+            scope = my_random.choice(scopes)
 
-            names[var] = verbatim()
-
-            return var
+            key, val = randomly_insert_name_into_scope(name, scope, is_section)
+            return key, val
 
         def whitespace():
             # I planned to use more whitespace characters, but that seems to
@@ -193,10 +238,47 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
                 my_random.choice(alphabet) for _ in range(my_random.randint(10, 100))
             )
 
-        def gen_verbatim():
+        def gen_verbatim(scopes):
             yield verbatim()
 
-        template = "".join(gen_template(n))
+        def fill_in_lists_in_names(d):
+            if type(d) == dict:
+                for k in d:
+                    if d[k] is not None:
+                        fill_in_lists_in_names(d[k])
+                        if my_random.random() < 0.75:
+                            d[k] = [
+                                copy.deepcopy(d[k])
+                                for i in range(my_random.randint(1, 4))
+                            ]
+            else:
+                raise TypeError
+
+        def fill_in_values_for_leafs(d):
+            if type(d) == dict:
+                for k in d:
+                    if d[k] is None:
+                        d[k] = verbatim()
+                    else:
+                        fill_in_values_for_leafs(d[k])
+            elif type(d) == list:
+                for i in range(len(d)):
+                    if d[i] is None:
+                        d[i] = verbatim()
+                    else:
+                        fill_in_values_for_leafs(d[i])
+            else:
+                raise TypeError
+
+        # Generate the template
+        template = "".join(gen_template(n, [names]))
+
+        # Elaborate the names to sometimes include lists
+        fill_in_lists_in_names(names)
+
+        # Generate the leaf values for the keys in names
+        fill_in_values_for_leafs(names)
+
         return template, names
 
     _generate.__name__ = f"generate_test_case_random_with_seed_{seed}"

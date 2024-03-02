@@ -5,7 +5,6 @@ import typing as t
 from collections import deque
 
 from typing_extensions import assert_never
-
 from .tokenize import tokenize
 
 # '!': 'comment',

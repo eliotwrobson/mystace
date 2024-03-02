@@ -6,6 +6,8 @@ def test_tokenize() -> None:
         {{#thing}}
         hello
         {{/thing}}
+        {{^other.thing}}
+        {{/other.thing}}
     """
     res = create_mustache_tree(template)
     print(res)

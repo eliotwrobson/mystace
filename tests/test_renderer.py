@@ -4,7 +4,6 @@
 import collections
 
 import pytest
-
 from chevron2 import (
     Chevron2Error,
     DelimiterError,

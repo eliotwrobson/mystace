@@ -39,4 +39,5 @@ __all__ = [
     "DelimiterError",
     "MissingClosingTagError",
     "StrayClosingTagError",
+    "create_mustache_tree",
 ]

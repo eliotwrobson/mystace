@@ -10,6 +10,7 @@ import subprocess
 import typing as t
 
 import chevron
+import chevron2
 import combustache
 import moosetash
 import pystache
@@ -17,8 +18,6 @@ import pytest
 import ustache
 from faker import Faker
 from typing_extensions import assert_never
-
-import chevron2
 
 RenderFunctionT = t.Literal[
     "chevron2", "chevron", "combustache", "moosetash", "pystache", "ustache"
@@ -242,7 +241,7 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
             yield verbatim()
 
         def fill_in_lists_in_names(d):
-            if type(d) == dict:
+            if isinstance(d, dict):
                 for k in d:
                     if d[k] is not None:
                         fill_in_lists_in_names(d[k])
@@ -255,13 +254,13 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
                 raise TypeError
 
         def fill_in_values_for_leafs(d):
-            if type(d) == dict:
+            if isinstance(d, dict):
                 for k in d:
                     if d[k] is None:
                         d[k] = verbatim()
                     else:
                         fill_in_values_for_leafs(d[k])
-            elif type(d) == list:
+            elif isinstance(d, list):
                 for i in range(len(d)):
                     if d[i] is None:
                         d[i] = verbatim()
@@ -311,7 +310,7 @@ def test_large(
     elif render_function_name == "pystache":
         render_function = pystache.render
     elif render_function_name == "ustache":
-        render_function = pystache.render
+        render_function = ustache.render
     else:
         assert_never(render_function_name)
 

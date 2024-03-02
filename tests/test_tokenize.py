@@ -1,4 +1,4 @@
-from chevron2 import create_mustache_tree
+from chevron2 import render_from_template
 
 
 def test_tokenize() -> None:
@@ -14,7 +14,8 @@ def test_tokenize() -> None:
             {{{another_name}}}
         {{/other.thing}}
     """
-    res = create_mustache_tree(template)
-    print(res)
+    data = {"thing": {"inner_thing": True}}
 
+    val = render_from_template(template, data)
+    print("res:", val)
     assert False

@@ -1,6 +1,6 @@
 import functools
 import html
-from typing import Any, Callable
+import typing as t
 
 from chevron2.ctx import Ctx
 from chevron2.nodes.comment import Comment
@@ -61,7 +61,7 @@ def find_node(
     template_end: int,
     left_delimiter: str,
     right_delimiter: str,
-) -> tuple[str, int, int] | None:
+) -> t.Optional[t.Tuple[str, int, int]]:
     start_idx = template.find(left_delimiter, search_start, template_end)
     if start_idx < search_start:
         return None
@@ -90,7 +90,7 @@ def parse(
     template_end: int,
     left_delimiter: str = "{{",
     right_delimiter: str = "}}",
-) -> list[Node | str]:
+) -> t.List[t.Union[Node, str]]:
     nodes = []
     search_start = template_start
     while True:
@@ -148,14 +148,14 @@ def _render(
 
 def render(
     template: str,
-    data: dict | None = None,
-    partials: dict[str, str] | None = None,
+    data: t.Optional[t.Dict] = None,
+    partials: t.Optional[t.Dict[str, str]] = None,
     left_delimiter: str = "{{",
     right_delimiter: str = "}}",
     *,
-    stringify: Callable[[Any], str] = to_str,
-    escape: Callable[[str], str] = html.escape,
-    missing_data: Callable[[], Any] = lambda: "",
+    stringify: t.Callable[[t.Any], str] = to_str,
+    escape: t.Callable[[str], str] = html.escape,
+    missing_data: t.Callable[[], t.Any] = lambda: "",
 ) -> str:
     """
     Renders a mustache template.

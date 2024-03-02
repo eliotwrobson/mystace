@@ -1,164 +1,257 @@
-import enum
-import html
-import re
-import typing as t
+# From https://github.com/noahmorrison/chevron/blob/main/chevron/tokenizer.py
+# Using another tokenizer as a starting point.
 
-from .util import html_escape
-
-
-class TagType(enum.Enum):
-    VARIABLE = 0
-    VARIABLE_RAW = 1
-    RAW = 2
-    SECTION = 3
-    INVERTED_SECTION = 4
-    PARTIAL = 5
-    COMMENT = 6
-    CLOSE = 7
-    # Useful in to represent non-tags
-    NONE = 8
+# Globals
+_CURRENT_LINE = 1
+_LAST_TAG_LINE = None
 
 
-class TokenType(t.NamedTuple):
-    tag_key: str
-    tag_type: TagType
+class ChevronError(SyntaxError):
+    pass
+
+#
+# Helper functions
+#
 
 
-def get_delimiter_dict() -> t.Dict[str, t.Tuple[str, TagType]]:
-    # TODO add support for delimiter changes
-    delimiter_dict = {
-        r"{{": (r"}}", TagType.VARIABLE),
-        r"{{{": (r"}}}", TagType.VARIABLE_RAW),
-        r"{{&": (r"}}", TagType.RAW),
-        r"{{#": (r"}}", TagType.SECTION),
-        r"{{^": (r"}}", TagType.INVERTED_SECTION),
-        r"{{>": (r"}}", TagType.PARTIAL),
-        r"{{!": (r"}}", TagType.COMMENT),
-        r"{{/": (r"}}", TagType.CLOSE),
-    }
+def grab_literal(template, l_del):
+    """Parse a literal from the template"""
 
-    return delimiter_dict
+    global _CURRENT_LINE
 
+    try:
+        # Look for the next tag and move the template to it
+        literal, template = template.split(l_del, 1)
+        _CURRENT_LINE += literal.count('\n')
+        return (literal, template)
 
-def generate_regex_from_literals() -> str:
-    # TODO get away from hardcoding this
-    literals = [
-        r"{{!",
-        r"{{#",
-        r"{{^",
-        r"{{/",
-        r"{{>",
-        r"{{{",
-        r"{{&",
-        r"}}}",
-        # Had to put these last two last to give them last precedence
-        r"{{",
-        r"}}",
-    ]
-    # Escape special characters in literals and
-    # join literals into a single pattern separated by '|'
-    return "(" + "|".join(re.escape(literal) for literal in literals) + ")"
+    # There are no more tags in the template?
+    except ValueError:
+        # Then the rest of the template is a literal
+        return (template, '')
 
 
-def generate_tokens_from_template(template: str) -> t.Generator[TokenType, None, None]:
-    delimiter_dict = get_delimiter_dict()
-    del_regex_pattern = generate_regex_from_literals()
-    print(del_regex_pattern)
+def l_sa_check(template, literal, is_standalone):
+    """Do a preliminary check to see if a tag could be a standalone"""
 
-    token_iter = iter(re.split(del_regex_pattern, template))
-    curr_sub_token = next(token_iter, None)
-    while curr_sub_token is not None:
-        if curr_sub_token in delimiter_dict:
-            end_token, tag_type = delimiter_dict[curr_sub_token]
-            tag_key = next(token_iter)
-            expected_end_token = next(token_iter)
+    # If there is a newline, or the previous tag was a standalone
+    if literal.find('\n') != -1 or is_standalone:
+        padding = literal.split('\n')[-1]
 
-            assert expected_end_token == end_token
-
-            yield TokenType(tag_key, tag_type)
-        else:
-            yield TokenType(curr_sub_token, TagType.NONE)
-
-        curr_sub_token = next(token_iter, None)
-
-
-class Context:
-    __slots__ = ("stack",)
-
-    stack: t.List[t.Tuple[t.Optional[str], t.Any]]
-
-    # TODO come up with a data type to represent the initial data
-    def __init__(self, initial_data) -> None:
-        self.stack = [(None, initial_data)]
-
-    # TODO this probably requires more key checking to actually work correctly
-    @staticmethod
-    def check_context_for_key(context, key_tuple: t.Tuple[str, ...]):
-        # Lookup stops if we hit a dot
-        if not key_tuple:
-            return context
-
-        for key_item in key_tuple:
-            if key_item not in context:
-                return None
-
-            # TODO need to correctly distinguish the case where the
-            # value could be None
-            context = context[key_item]
-
-        return context
-
-    def get_from_context(self, key: str):
-        if key == ".":
-            return self.stack[-1][1]
-
-        key_tuple = key.split(".")
-        # Search for possible contexts starting from the top
-        for _, context in reversed(self.stack):
-            key_value = self.check_context_for_key(context, key_tuple)
-            if key_value is not None:
-                return key_value
-        return None
-
-    def open_section(self, key: str) -> bool:
-        new_context = self.get_from_context(key)
-        print(key, new_context, self.stack)
-        if new_context:
-            self.stack.append((key, new_context))
+        # If all the characters since the last newline are spaces
+        if padding.isspace() or padding == '':
+            # Then the next tag could be a standalone
             return True
+        else:
+            # Otherwise it can't be
+            return False
 
+
+def r_sa_check(template, tag_type, is_standalone):
+    """Do a final checkto see if a tag could be a standalone"""
+
+    # Check right side if we might be a standalone
+    if is_standalone and tag_type not in ['variable', 'no escape']:
+        on_newline = template.split('\n', 1)
+
+        # If the stuff to the right of us are spaces we're a standalone
+        if on_newline[0].isspace() or not on_newline[0]:
+            return True
+        else:
+            return False
+
+    # If we're a tag can't be a standalone
+    else:
         return False
 
-    def close_section(self, key: str) -> None:
-        print(self.stack)
-        if self.stack[-1][0] != key:
-            raise Exception
-        self.stack.pop()
+
+def parse_tag(template, l_del, r_del):
+    """Parse a tag from a template"""
+    global _CURRENT_LINE
+    global _LAST_TAG_LINE
+
+    tag_types = {
+        '!': 'comment',
+        '#': 'section',
+        '^': 'inverted section',
+        '/': 'end',
+        '>': 'partial',
+        '=': 'set delimiter?',
+        '{': 'no escape?',
+        '&': 'no escape'
+    }
+
+    # Get the tag
+    try:
+        tag, template = template.split(r_del, 1)
+    except ValueError:
+        raise ChevronError('unclosed tag '
+                           'at line {0}'.format(_CURRENT_LINE))
+
+    # Find the type meaning of the first character
+    tag_type = tag_types.get(tag[0], 'variable')
+
+    # If the type is not a variable
+    if tag_type != 'variable':
+        # Then that first character is not needed
+        tag = tag[1:]
+
+    # If we might be a set delimiter tag
+    if tag_type == 'set delimiter?':
+        # Double check to make sure we are
+        if tag.endswith('='):
+            tag_type = 'set delimiter'
+            # Remove the equal sign
+            tag = tag[:-1]
+
+        # Otherwise we should complain
+        else:
+            raise ChevronError('unclosed set delimiter tag\n'
+                               'at line {0}'.format(_CURRENT_LINE))
+
+    # If we might be a no html escape tag
+    elif tag_type == 'no escape?':
+        # And we have a third curly brace
+        # (And are using curly braces as delimiters)
+        if l_del == '{{' and r_del == '}}' and template.startswith('}'):
+            # Then we are a no html escape tag
+            template = template[1:]
+            tag_type = 'no escape'
+
+    # Strip the whitespace off the key and return
+    return ((tag_type, tag.strip()), template)
 
 
-def tokenize(template: str, data: t.Any) -> str:
-    render_context = Context(data)
-    res_list = []
+#
+# The main tokenizing function
+#
 
-    for token in generate_tokens_from_template(template):
-        print(token, res_list)
-        if token.tag_type == TagType.NONE:
-            res_list.append(token.tag_key)
-        elif token.tag_type == TagType.COMMENT:
-            continue
-        elif token.tag_type == TagType.VARIABLE:
-            content = render_context.get_from_context(token.tag_key)
-            if content:
-                res_list.append(html_escape(str(content)))
-        elif token.tag_type == TagType.VARIABLE_RAW:
-            content = render_context.get_from_context(token.tag_key)
-            if content:
-                res_list.append(str(content))
-        elif token.tag_type == TagType.SECTION:
-            # This is the context that will be used in the next section
-            render_context.open_section(token.tag_key)
-        elif token.tag_type == TagType.CLOSE:
-            # Closing the current context. Checks that the key matches.
-            render_context.close_section(token.tag_key)
+def tokenize(template, def_ldel='{{', def_rdel='}}'):
+    """Tokenize a mustache template
 
-    return "".join(res_list)
+    Tokenizes a mustache template in a generator fashion,
+    using file-like objects. It also accepts a string containing
+    the template.
+
+
+    Arguments:
+
+    template -- a file-like object, or a string of a mustache template
+
+    def_ldel -- The default left delimiter
+                ("{{" by default, as in spec compliant mustache)
+
+    def_rdel -- The default right delimiter
+                ("}}" by default, as in spec compliant mustache)
+
+
+    Returns:
+
+    A generator of mustache tags in the form of a tuple
+
+    -- (tag_type, tag_key)
+
+    Where tag_type is one of:
+     * literal
+     * section
+     * inverted section
+     * end
+     * partial
+     * no escape
+
+    And tag_key is either the key or in the case of a literal tag,
+    the literal itself.
+    """
+
+    global _CURRENT_LINE, _LAST_TAG_LINE
+    _CURRENT_LINE = 1
+    _LAST_TAG_LINE = None
+    # If the template is a file-like object then read it
+    try:
+        template = template.read()
+    except AttributeError:
+        pass
+
+    is_standalone = True
+    open_sections = []
+    l_del = def_ldel
+    r_del = def_rdel
+
+    while template:
+        literal, template = grab_literal(template, l_del)
+
+        # If the template is completed
+        if not template:
+            # Then yield the literal and leave
+            yield ('literal', literal)
+            break
+
+        # Do the first check to see if we could be a standalone
+        is_standalone = l_sa_check(template, literal, is_standalone)
+
+        # Parse the tag
+        tag, template = parse_tag(template, l_del, r_del)
+        tag_type, tag_key = tag
+
+        # Special tag logic
+
+        # If we are a set delimiter tag
+        if tag_type == 'set delimiter':
+            # Then get and set the delimiters
+            dels = tag_key.strip().split(' ')
+            l_del, r_del = dels[0], dels[-1]
+
+        # If we are a section tag
+        elif tag_type in ['section', 'inverted section']:
+            # Then open a new section
+            open_sections.append(tag_key)
+            _LAST_TAG_LINE = _CURRENT_LINE
+
+        # If we are an end tag
+        elif tag_type == 'end':
+            # Then check to see if the last opened section
+            # is the same as us
+            try:
+                last_section = open_sections.pop()
+            except IndexError:
+                raise ChevronError('Trying to close tag "{0}"\n'
+                                   'Looks like it was not opened.\n'
+                                   'line {1}'
+                                   .format(tag_key, _CURRENT_LINE + 1))
+            if tag_key != last_section:
+                # Otherwise we need to complain
+                raise ChevronError('Trying to close tag "{0}"\n'
+                                   'last open tag is "{1}"\n'
+                                   'line {2}'
+                                   .format(tag_key, last_section,
+                                           _CURRENT_LINE + 1))
+
+        # Do the second check to see if we're a standalone
+        is_standalone = r_sa_check(template, tag_type, is_standalone)
+
+        # Which if we are
+        if is_standalone:
+            # Remove the stuff before the newline
+            template = template.split('\n', 1)[-1]
+
+            # Partials need to keep the spaces on their left
+            if tag_type != 'partial':
+                # But other tags don't
+                literal = literal.rstrip(' ')
+
+        # Start yielding
+        # Ignore literals that are empty
+        if literal != '':
+            yield ('literal', literal)
+
+        # Ignore comments and set delimiters
+        if tag_type not in ['comment', 'set delimiter?']:
+            yield (tag_type, tag_key)
+
+    # If there are any open sections when we're done
+    if open_sections:
+        # Then we need to complain
+        raise ChevronError('Unexpected EOF\n'
+                           'the tag "{0}" was never closed\n'
+                           'was opened at line {1}'
+                           .format(open_sections[-1], _LAST_TAG_LINE))

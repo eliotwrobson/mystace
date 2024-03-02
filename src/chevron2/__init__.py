@@ -28,6 +28,7 @@ from chevron2.exceptions import (
     StrayClosingTagError,
 )
 from chevron2.main import cache_clear, render
+from chevron2.mustache_tree import create_mustache_tree
 from chevron2.tokenize import tokenize
 
 __all__ = [

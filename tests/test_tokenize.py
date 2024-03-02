@@ -1,9 +1,13 @@
-from chevron2 import tokenize
+from chevron2 import create_mustache_tree
 
 
-def test_split_into_sub_tokens() -> None:
-    thing = r"A{{#x}}B{{#x}}{{.}}{{/x}}C{{/x}}D"
-    data = {"x": ["z", "x"]}
-    res = tokenize(thing, data)
+def test_tokenize() -> None:
+    template = """
+        {{#thing}}
+        hello
+        {{/thing}}
+    """
+    res = create_mustache_tree(template)
     print(res)
+
     assert False

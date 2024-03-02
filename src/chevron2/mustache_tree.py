@@ -7,6 +7,7 @@ from collections import deque
 from typing_extensions import assert_never
 
 from .tokenize import tokenize
+from .util import html_escape
 
 # be returned
 ContextObjT = t.Any
@@ -40,6 +41,10 @@ class ContextStack:
         for key in chain[1:]:
             found = deep_get(found, key)
         return found
+
+    # TODO need to implement this
+    def open_section():
+        pass
 
 
 def deep_get(item: t.Any, key: str) -> t.Any:
@@ -132,16 +137,39 @@ class MustacheRenderer:
     def render(self, context: ContextObjT) -> str:
         res_list = []
         starting_context = ContextStack([context])
+
+        # Never need to read the root because it has no data
         work_deque: t.Deque[t.Tuple[MustacheTreeNode, ContextStack]] = deque(
-            [(self.mustache_tree, starting_context)]
+            (node, starting_context) for node in self.mustache_tree.children
         )
 
         while work_deque:
             curr_node, curr_context = work_deque.popleft()
-
+            print(curr_node.tag_type)
             if curr_node.tag_type is TagType.LITERAL:
                 res_list.append(curr_node.data)
-            elif curr_node.tag_type is
+            elif curr_node.tag_type is TagType.VARIABLE:
+                variable_content = curr_context.get(curr_node.data)
+                res_list.append(variable_content)
+            elif curr_node.tag_type is TagType.VARIABLE_RAW:
+                variable_content = curr_context.get(curr_node.data)
+                res_list.append(html_escape(variable_content))
+            elif curr_node.tag_type is TagType.SECTION:
+                new_context_stack = curr_context.open_section(curr_node.data)
+
+                if bool(new_context_stack):
+                    for child_node in reversed(curr_node.children):
+                        # No need to make a copy of the context per-child, it's immutable
+                        work_deque.appendleft((child_node, new_context_stack))
+
+            elif curr_node.tag_type is TagType.INVERTED_SECTION:
+                # No need to add to the context stack, inverted sections
+                # by definition aren't in the namespace and can't add anything.
+                lookup_data = curr_context.get(curr_node.data)
+
+                if not bool(lookup_data):
+                    for child_node in reversed(curr_node.children):
+                        work_deque.appendleft((child_node, curr_context))
 
         return "".join(res_list)
 
@@ -155,12 +183,12 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
 
     for token_type, token_data in tokenize(thing):
-        print(work_stack)
+        # print(work_stack)
 
         if token_type == "literal":
             literal_node = MustacheTreeNode(TagType.LITERAL, token_data)
             work_stack[-1].children.append(literal_node)
-            print("lit:", token_data)
+            # print("lit:", token_data)
         elif token_type in {"section", "inverted section"}:
             tag_type = (
                 TagType.SECTION if token_type == "section" else TagType.INVERTED_SECTION
@@ -171,12 +199,12 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
 
             # Add section to work stack and descend in on the next iteration.
             work_stack.append(section_node)
-            print("sec:", tag_type, token_data)
+            # print("sec:", tag_type, token_data)
         elif token_type == "end":
             assert work_stack[-1].data == token_data
             # Close the current section by popping off the end of the work stack.
             work_stack.pop()
-            print("end:", token_data)
+            # print("end:", token_data)
         elif token_type in {"variable", "no escape"}:
             tag_type = (
                 TagType.VARIABLE if token_type == "variable" else TagType.VARIABLE_RAW
@@ -185,10 +213,13 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             # Add section to list of children
             work_stack[-1].children.append(variable_node)
         else:
-            print(token_type, token_data)
+            # print(token_type, token_data)
             assert_never(token_type)
 
     return root
 
 
-# def render_from
+def render_from_template(template: str, context: ContextObjT) -> str:
+    mustache_tree_node = create_mustache_tree(template)
+    renderer = MustacheRenderer(mustache_tree_node)
+    return renderer.render(context)

@@ -8,6 +8,8 @@ https://github.com/mustache/spec
 import json
 from pathlib import Path
 
+from combustache import render
+
 from chevron2 import render_from_template
 
 # Names of tests to skip for now that fail, TODO debug these.
@@ -68,6 +70,15 @@ SKIPPED_TESTS = frozenset(
         "~lambdas - Section - Multiple Calls",
     )
 )
+
+
+def test_mini() -> None:
+    n = 1
+    names = {f"thing{i}": i for i in range(n)}
+    template = "".join(r"{{" + name + "}}" for name in names.keys())
+
+    res = render_from_template(template, names)
+    assert render(template, names) == res
 
 
 def test_spec_from_folder(datadir: Path) -> None:

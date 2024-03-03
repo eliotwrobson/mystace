@@ -23,7 +23,7 @@ class ContextStack:
 
     def get(self, key: str) -> t.Any:
         if key == ".":
-            return self[-1]
+            return self.context[-1]
 
         chain = key.split(".")
         reversed_ctx = reversed(self.context)
@@ -52,6 +52,17 @@ class ContextStack:
         # new context
         if not new_context:
             return []
+
+        # In the case of the list, need a new context for each item
+        if isinstance(new_context, list):
+            res_list = []
+
+            for item in new_context:
+                new_stack = self.copy()
+                new_stack.context.append(item)
+                res_list.append(new_stack)
+
+            return res_list
 
         new_stack = self.copy()
         new_stack.context.append(new_context)
@@ -153,7 +164,7 @@ class MustacheRenderer:
         work_deque: t.Deque[t.Tuple[MustacheTreeNode, ContextStack]] = deque(
             (node, starting_context) for node in self.mustache_tree.children
         )
-
+        # print(context)
         while work_deque:
             curr_node, curr_context = work_deque.popleft()
             # print(curr_node.tag_type)
@@ -161,6 +172,7 @@ class MustacheRenderer:
                 res_list.append(curr_node.data)
             elif curr_node.tag_type is TagType.VARIABLE:
                 variable_content = curr_context.get(curr_node.data)
+                print(curr_node.data, variable_content)
                 if variable_content:
                     res_list.append(html_escape(str(variable_content)))
             elif curr_node.tag_type is TagType.VARIABLE_RAW:
@@ -170,7 +182,7 @@ class MustacheRenderer:
             elif curr_node.tag_type is TagType.SECTION:
                 new_context_stacks = curr_context.open_section(curr_node.data)
 
-                for new_context_stack in new_context_stacks:
+                for new_context_stack in reversed(new_context_stacks):
                     for child_node in reversed(curr_node.children):
                         # No need to make a copy of the context per-child, it's immutable
                         work_deque.appendleft((child_node, new_context_stack))

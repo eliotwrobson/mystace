@@ -18,4 +18,11 @@ def test_tokenize() -> None:
 
     val = render_from_template(template, data)
     print("res:", val)
+    data = {"a": {"b": {"c": {"name": "stuff"}}}, "c": {"name": "Jim"}}
+    template = '"{{a.b.c.name}}" == ""'
+    expected = '"stuff" == ""'
+
+    val = render_from_template(template, data)
+    print(val)
+
     assert False

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import enum
 import typing as t
 from collections import deque
@@ -27,7 +28,7 @@ class ContextStack:
             return self[-1]
 
         chain = key.split(".")
-        reversed_ctx = reversed(self)
+        reversed_ctx = reversed(self.context)
 
         found = None
         for item in reversed_ctx:
@@ -42,9 +43,21 @@ class ContextStack:
             found = deep_get(found, key)
         return found
 
-    # TODO need to implement this
-    def open_section():
-        pass
+    def copy(self) -> ContextStack:
+        new_context = copy.copy(self.context)
+        return ContextStack(new_context)
+
+    def open_section(self, key: str) -> t.Optional[ContextStack]:
+        new_context = self.get(key)
+
+        # If lookup is "falsy", no need to open the section or copy
+        # new context
+        if not new_context:
+            return None
+
+        new_stack = self.copy()
+        new_stack.context.append(new_context)
+        return new_stack
 
 
 def deep_get(item: t.Any, key: str) -> t.Any:
@@ -150,10 +163,12 @@ class MustacheRenderer:
                 res_list.append(curr_node.data)
             elif curr_node.tag_type is TagType.VARIABLE:
                 variable_content = curr_context.get(curr_node.data)
-                res_list.append(variable_content)
+                if variable_content:
+                    res_list.append(variable_content)
             elif curr_node.tag_type is TagType.VARIABLE_RAW:
                 variable_content = curr_context.get(curr_node.data)
-                res_list.append(html_escape(variable_content))
+                if variable_content:
+                    res_list.append(html_escape(variable_content))
             elif curr_node.tag_type is TagType.SECTION:
                 new_context_stack = curr_context.open_section(curr_node.data)
 

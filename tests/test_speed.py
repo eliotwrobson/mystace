@@ -299,8 +299,16 @@ def test_large(
 ) -> None:
     n = 1000
 
+    template, names = test_case_generator(n)
+
     if render_function_name == "chevron2":
-        render_function = chevron2.render_from_template
+        # NOTE Benchmarking with this isn't totally cheating since some of these libraries
+        # to caching, meaning that the benchmark object is timing the cached version on
+        # everything past the first run.
+        renderer = chevron2.MustacheRenderer.from_template(template)
+
+        def render_function(_, obj):
+            return renderer.render(obj)
     elif render_function_name == "chevron":
         render_function = chevron.render
     elif render_function_name == "combustache":
@@ -314,8 +322,6 @@ def test_large(
         render_function = ustache.render
     else:
         assert_never(render_function_name)
-
-    template, names = test_case_generator(n)
 
     os.makedirs("cprofile_stats", exist_ok=True)
     my_locals = locals()

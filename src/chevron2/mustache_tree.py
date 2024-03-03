@@ -27,21 +27,31 @@ class ContextStack:
         if key == ".":
             return self.context[-1]
 
-        chain = key.split(".")
+        chain_iter = iter(key.split("."))
         reversed_ctx = reversed(self.context)
 
-        found = None
+        first_key = next(chain_iter)
+
+        # TODO I think this is where changes need to be made if we want to
+        # support indexing and lambdas.
+        outer_context = None
+
         for item in reversed_ctx:
-            found = deep_get(item, chain[0])
-            if found is not None:
+            if isinstance(item, dict) and first_key in item:
+                outer_context = item[first_key]
                 break
 
-        if found is None:
+        if outer_context is None:
             return None
 
-        for key in chain[1:]:
-            found = deep_get(found, key)
-        return found
+        # Loop through the rest
+        for key in chain_iter:
+            if isinstance(outer_context, dict) and key in outer_context:
+                outer_context = outer_context[key]
+            else:
+                return None
+
+        return outer_context
 
     def copy(self) -> ContextStack:
         new_context = copy.copy(self.context)
@@ -71,6 +81,8 @@ class ContextStack:
         return [new_stack]
 
 
+### TODO delete this function once we copy the functionality into the
+### new getter logic
 def deep_get(item: t.Any, key: str) -> t.Any:
     try:
         item = item()
@@ -174,7 +186,7 @@ class MustacheRenderer:
                 res_list.append(curr_node.data)
             elif curr_node.tag_type is TagType.VARIABLE:
                 variable_content = curr_context.get(curr_node.data)
-                print(curr_node.data, variable_content)
+                # print(curr_node.data, variable_content)
                 if variable_content:
                     res_list.append(html_escape(str(variable_content)))
             elif curr_node.tag_type is TagType.VARIABLE_RAW:

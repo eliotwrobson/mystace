@@ -5,8 +5,6 @@ import enum
 import typing as t
 from collections import deque
 
-from typing_extensions import assert_never
-
 from .tokenize import tokenize
 from .util import html_escape
 
@@ -158,17 +156,17 @@ class MustacheRenderer:
 
         while work_deque:
             curr_node, curr_context = work_deque.popleft()
-            print(curr_node.tag_type)
+            # print(curr_node.tag_type)
             if curr_node.tag_type is TagType.LITERAL:
                 res_list.append(curr_node.data)
             elif curr_node.tag_type is TagType.VARIABLE:
                 variable_content = curr_context.get(curr_node.data)
                 if variable_content:
-                    res_list.append(variable_content)
+                    res_list.append(html_escape(str(variable_content)))
             elif curr_node.tag_type is TagType.VARIABLE_RAW:
                 variable_content = curr_context.get(curr_node.data)
                 if variable_content:
-                    res_list.append(html_escape(variable_content))
+                    res_list.append(str(variable_content))
             elif curr_node.tag_type is TagType.SECTION:
                 new_context_stack = curr_context.open_section(curr_node.data)
 
@@ -229,12 +227,13 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             work_stack[-1].children.append(variable_node)
         else:
             # print(token_type, token_data)
-            assert_never(token_type)
+            # assert_never(token_type)
+            raise Exception
 
     return root
 
 
-def render_from_template(template: str, context: ContextObjT) -> str:
+def render_from_template(template: str, context: ContextObjT, partials) -> str:
     mustache_tree_node = create_mustache_tree(template)
     renderer = MustacheRenderer(mustache_tree_node)
     return renderer.render(context)

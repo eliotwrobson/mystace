@@ -245,7 +245,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     return root
 
 
-def render_from_template(template: str, context: ContextObjT, partials) -> str:
+def render_from_template(template: str, context: ContextObjT, partials=None) -> str:
     mustache_tree_node = create_mustache_tree(template)
     renderer = MustacheRenderer(mustache_tree_node)
     return renderer.render(context)

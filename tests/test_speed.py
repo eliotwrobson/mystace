@@ -10,7 +10,6 @@ import subprocess
 import typing as t
 
 import chevron
-import chevron2
 import combustache
 import moosetash
 import pystache
@@ -18,6 +17,8 @@ import pytest
 import ustache
 from faker import Faker
 from typing_extensions import assert_never
+
+import chevron2
 
 RenderFunctionT = t.Literal[
     "chevron2", "chevron", "combustache", "moosetash", "pystache", "ustache"
@@ -299,7 +300,7 @@ def test_large(
     n = 1000
 
     if render_function_name == "chevron2":
-        render_function = chevron2.render
+        render_function = chevron2.render_from_template
     elif render_function_name == "chevron":
         render_function = chevron.render
     elif render_function_name == "combustache":

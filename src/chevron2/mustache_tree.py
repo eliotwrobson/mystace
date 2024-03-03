@@ -45,17 +45,17 @@ class ContextStack:
         new_context = copy.copy(self.context)
         return ContextStack(new_context)
 
-    def open_section(self, key: str) -> t.Optional[ContextStack]:
+    def open_section(self, key: str) -> t.List[ContextStack]:
         new_context = self.get(key)
 
         # If lookup is "falsy", no need to open the section or copy
         # new context
         if not new_context:
-            return None
+            return []
 
         new_stack = self.copy()
         new_stack.context.append(new_context)
-        return new_stack
+        return [new_stack]
 
 
 def deep_get(item: t.Any, key: str) -> t.Any:
@@ -168,9 +168,9 @@ class MustacheRenderer:
                 if variable_content:
                     res_list.append(str(variable_content))
             elif curr_node.tag_type is TagType.SECTION:
-                new_context_stack = curr_context.open_section(curr_node.data)
+                new_context_stacks = curr_context.open_section(curr_node.data)
 
-                if bool(new_context_stack):
+                for new_context_stack in new_context_stacks:
                     for child_node in reversed(curr_node.children):
                         # No need to make a copy of the context per-child, it's immutable
                         work_deque.appendleft((child_node, new_context_stack))

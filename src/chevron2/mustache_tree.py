@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import enum
 import typing as t
 from collections import deque
@@ -14,21 +13,27 @@ from .util import html_escape
 ContextObjT = t.Any
 
 
-class ContextStack:
-    context: t.List[ContextObjT]
+class ContextNode:
+    __slots__ = ("context", "parent_context_node")
 
-    def __init__(self, context: t.Optional[t.List[ContextObjT]] = None) -> None:
-        if context is None:
-            self.context = []
-        else:
-            self.context = context
+    context: ContextObjT
+    parent_context_node: t.Optional[ContextNode]
+
+    def __init__(
+        self,
+        context: ContextObjT,
+        parent_context_node: t.Optional[ContextNode] = None,
+    ) -> None:
+        self.context = context
+        self.parent_context_node = parent_context_node
 
     def get(self, key: str) -> t.Any:
         if key == ".":
-            return self.context[-1]
+            return self.context
 
         chain_iter = iter(key.split("."))
-        reversed_ctx = reversed(self.context)
+        curr_ctx = self.context
+        parent_node = self.parent_context_node
 
         first_key = next(chain_iter)
 
@@ -36,10 +41,16 @@ class ContextStack:
         # support indexing and lambdas.
         outer_context = None
 
-        for item in reversed_ctx:
-            if isinstance(item, dict) and first_key in item:
-                outer_context = item[first_key]
+        while curr_ctx is not None:
+            if isinstance(curr_ctx, dict) and first_key in curr_ctx:
+                outer_context = curr_ctx[first_key]
                 break
+            else:
+                if parent_node is None:
+                    curr_ctx = None
+                else:
+                    curr_ctx = parent_node.context
+                    parent_node = parent_node.parent_context_node
 
         if outer_context is None:
             return None
@@ -53,11 +64,7 @@ class ContextStack:
 
         return outer_context
 
-    def copy(self) -> ContextStack:
-        new_context = copy.copy(self.context)
-        return ContextStack(new_context)
-
-    def open_section(self, key: str) -> t.List[ContextStack]:
+    def open_section(self, key: str) -> t.List[ContextNode]:
         new_context = self.get(key)
 
         # If lookup is "falsy", no need to open the section or copy
@@ -70,14 +77,13 @@ class ContextStack:
             res_list = []
 
             for item in new_context:
-                new_stack = self.copy()
-                new_stack.context.append(item)
+                new_stack = ContextNode(item, self)
+                # new_stack.parent_context_node = self
                 res_list.append(new_stack)
 
             return res_list
 
-        new_stack = self.copy()
-        new_stack.context.append(new_context)
+        new_stack = ContextNode(new_context, self)
         return [new_stack]
 
 
@@ -172,10 +178,10 @@ class MustacheRenderer:
 
     def render(self, context: ContextObjT) -> str:
         res_list = []
-        starting_context = ContextStack([context])
+        starting_context = ContextNode(context)
 
         # Never need to read the root because it has no data
-        work_deque: t.Deque[t.Tuple[MustacheTreeNode, ContextStack]] = deque(
+        work_deque: t.Deque[t.Tuple[MustacheTreeNode, ContextNode]] = deque(
             (node, starting_context) for node in self.mustache_tree.children
         )
         # print(context)
@@ -184,15 +190,21 @@ class MustacheRenderer:
             # print(curr_node.tag_type)
             if curr_node.tag_type is TagType.LITERAL:
                 res_list.append(curr_node.data)
-            elif curr_node.tag_type is TagType.VARIABLE:
+            # TODO combine the cases below
+            elif (
+                curr_node.tag_type is TagType.VARIABLE
+                or curr_node.tag_type is TagType.VARIABLE_RAW
+            ):
                 variable_content = curr_context.get(curr_node.data)
-                # print(curr_node.data, variable_content)
-                if variable_content:
-                    res_list.append(html_escape(str(variable_content)))
-            elif curr_node.tag_type is TagType.VARIABLE_RAW:
-                variable_content = curr_context.get(curr_node.data)
-                if variable_content:
-                    res_list.append(str(variable_content))
+                if variable_content is not None:
+                    str_content = str(variable_content)
+                    # Skip ahead if we get the empty string
+                    if not str_content:
+                        continue
+                    if curr_node.tag_type is TagType.VARIABLE:
+                        str_content = html_escape(str_content)
+
+                    res_list.append(str_content)
             elif curr_node.tag_type is TagType.SECTION:
                 new_context_stacks = curr_context.open_section(curr_node.data)
 
@@ -226,12 +238,10 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
 
     for token_type, token_data in tokenize(thing):
-        # print(work_stack)
-
         if token_type == "literal":
             literal_node = MustacheTreeNode(TagType.LITERAL, token_data)
             work_stack[-1].children.append(literal_node)
-            # print("lit:", token_data)
+
         elif token_type in {"section", "inverted section"}:
             tag_type = (
                 TagType.SECTION if token_type == "section" else TagType.INVERTED_SECTION
@@ -242,12 +252,12 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
 
             # Add section to work stack and descend in on the next iteration.
             work_stack.append(section_node)
-            # print("sec:", tag_type, token_data)
+
         elif token_type == "end":
             assert work_stack[-1].data == token_data
             # Close the current section by popping off the end of the work stack.
             work_stack.pop()
-            # print("end:", token_data)
+
         elif token_type in {"variable", "no escape"}:
             tag_type = (
                 TagType.VARIABLE if token_type == "variable" else TagType.VARIABLE_RAW

@@ -5,6 +5,8 @@ import enum
 import typing as t
 from collections import deque
 
+import typing_extensions as te
+
 from .tokenize import tokenize
 from .util import html_escape
 
@@ -198,6 +200,10 @@ class MustacheRenderer:
 
         return "".join(res_list)
 
+    @classmethod
+    def from_template(cls: te.Self, template_str: str) -> te.Self:
+        return cls(create_mustache_tree(template_str))
+
 
 def create_mustache_tree(thing: str) -> MustacheTreeNode:
     # TODO make a special tag type for the root? Unsure
@@ -246,6 +252,4 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
 
 
 def render_from_template(template: str, context: ContextObjT, partials=None) -> str:
-    mustache_tree_node = create_mustache_tree(template)
-    renderer = MustacheRenderer(mustache_tree_node)
-    return renderer.render(context)
+    return MustacheRenderer.from_template(template).render(context)

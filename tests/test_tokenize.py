@@ -1,4 +1,23 @@
-from chevron2 import render_from_template
+from chevron2 import Lexer, render_from_template
+
+
+def test_lexer() -> None:
+    template = """
+        {{! random comment }}
+        {{#thing}}
+            {{#inner_thing}}
+            hello
+            {{/inner_thing}}
+            {{outer_thing}}
+        {{/thing}}
+        {{^other.thing}}
+            {{{another_name}}}
+        {{/other.thing}}
+    """
+
+    Lexer(template)
+
+    assert False
 
 
 def test_tokenize() -> None:

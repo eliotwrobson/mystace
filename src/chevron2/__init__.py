@@ -34,6 +34,7 @@ from chevron2.mustache_tree import (
     render_from_template,
 )
 from chevron2.tokenize import tokenize
+from chevron2.tokenize_new import Lexer
 
 __all__ = [
     "render",
@@ -46,4 +47,5 @@ __all__ = [
     "create_mustache_tree",
     "render_from_template",
     "MustacheRenderer",
+    "Lexer",
 ]

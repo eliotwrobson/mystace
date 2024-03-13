@@ -8,9 +8,8 @@ https://github.com/mustache/spec
 import json
 from pathlib import Path
 
-from combustache import render
-
 from chevron2 import render_from_template
+from combustache import render
 
 # Names of tests to skip for now that fail, TODO debug these.
 # Not a huuuuuge deal, since most of the failed ones are in the optional section
@@ -112,9 +111,9 @@ def test_spec_from_folder(datadir: Path) -> None:
             #    did_case_fail = True
 
             if did_case_fail:
-                print(full_test_case_name)
+                # print(full_test_case_name)
                 print(repr(result), repr(test_case["expected"]))
 
             any_fail = any_fail or did_case_fail
 
-            assert not any_fail
+    assert not any_fail

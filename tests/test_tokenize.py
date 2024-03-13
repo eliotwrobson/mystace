@@ -1,4 +1,4 @@
-from chevron2 import Lexer, render_from_template
+from chevron2 import mustache_tokenizer, render_from_template
 
 
 def test_lexer() -> None:
@@ -15,8 +15,9 @@ def test_lexer() -> None:
         {{/other.thing}}
     """
 
-    Lexer(template)
-
+    thing = mustache_tokenizer(template)
+    for item in thing:
+        print(item)
     assert False
 
 

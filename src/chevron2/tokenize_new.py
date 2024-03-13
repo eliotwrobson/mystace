@@ -19,8 +19,12 @@ from enum import Enum
 class TokenType(Enum):
     COMMENT = 0
     RAW_VARIABLE = 1
-    VARIABLE = 2
-    DELIMITER = 4
+    SECTION = 2
+    INVERTED_SECTION = 3
+    END_SECTION = 4
+    DELIMITER = 5
+    PARTIAL = 6
+    VARIABLE = 8
     LITERAL = 9
 
     def __lt__(self, other: t.Any) -> bool:
@@ -50,8 +54,14 @@ class TokenCursor:
 
     def __init__(self, text: str, right_delim: str, left_delim: str) -> None:
         patterns = [
-            (TokenType.RAW_VARIABLE, r"\{\{(.*?)\}\}"),
+            (TokenType.COMMENT, r"\{\{!(.*?)\}\}"),
+            (TokenType.RAW_VARIABLE, r"\{\{\{(.*?)\}\}\}"),
+            (TokenType.SECTION, r"\{\{#(.*?)\}\}"),
+            (TokenType.INVERTED_SECTION, r"\{\{^(.*?)\}\}"),
+            (TokenType.END_SECTION, r"\{\{/(.*?)\}\}"),
             (TokenType.DELIMITER, r"\{\{=(.*?)=\}\}"),
+            (TokenType.PARTIAL, r"\{\{>(.*?)\}\}"),
+            (TokenType.VARIABLE, r"\{\{(.*?)\}\}"),
         ]
 
         token_heap = []
@@ -73,32 +83,46 @@ class TokenCursor:
         self.text = text
 
     def get_next_token(self) -> t.Optional[t.Tuple[TokenType, str]]:
-        # If all searchers are ahead, return a literal
-        if self.token_heap[0].loc > self.cursor_loc:
-            literal_string = self.text[self.cursor_loc, self.token_heap[0].loc]
-            self.cursor_loc = self.token_heap[0].loc
+        # If at the end, no more tokens, so just return None
+        if self.cursor_loc == len(self.text):
+            return None
+
+        # If no more tokens, return the final literal
+        elif not self.token_heap:
+            res_string = self.text[self.cursor_loc : len(self.text)]
+            self.cursor_loc = len(self.text)
+            return TokenType.LITERAL, res_string
+
+        elif self.token_heap[0].loc > self.cursor_loc:
+            next_event_loc = self.token_heap[0].loc
+            literal_string = self.text[self.cursor_loc : next_event_loc]
+            self.cursor_loc = next_event_loc
             return TokenType.LITERAL, literal_string
 
-        start_loc, token_type, match_obj, pattern = heapq.heappop(self.token_heap)
+        new_token_type = self.token_heap[0].type
+        new_token_data = self.token_heap[0].next_match.group(0)
 
-        end_loc = match_obj.end()
-        self.cursor_loc = max(end_loc, self.cursor_loc)
-        next_match = pattern.search(self.text, end_loc)
+        next_event_loc = self.token_heap[0].next_match.end()
+        # Remove all stale tokens, update them by searching ahead of the location of the current cursor
+        while self.token_heap and self.token_heap[0].loc < next_event_loc:
+            start_loc, token_type, match_obj, pattern = heapq.heappop(self.token_heap)
+            next_match = pattern.search(self.text, next_event_loc)
 
-        # If match is none, this pattern doesn't appear in the text anymore, so we
-        # can just throw away.
-        if next_match is not None:
-            heapq.heappush(
-                self.token_heap,
-                Token(next_match.start(), token_type, next_match, pattern),
-            )
+            # If match is none, this pattern doesn't appear in the text anymore, so we
+            # can just throw away.
+            if next_match is not None:
+                heapq.heappush(
+                    self.token_heap,
+                    Token(next_match.start(), token_type, next_match, pattern),
+                )
 
-        return token_type, match_obj
+        self.cursor_loc = next_event_loc
+        return new_token_type, new_token_data
 
 
 def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     # Different tokenizers to deal with the stupid delimiter swaps
-    first_cursor = TokenCursor()
+    first_cursor = TokenCursor(text, r"\{\{", r"\}\}")
     res_token_list = []
     tokenizer_stack = [first_cursor]
 

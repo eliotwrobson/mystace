@@ -100,7 +100,8 @@ class TokenCursor:
             return TokenType.LITERAL, literal_string
 
         new_token_type = self.token_heap[0].type
-        new_token_data = self.token_heap[0].next_match.group(0)
+        # NOTE This uses the fact that each match group has a single unknown.
+        new_token_data = self.token_heap[0].next_match.group(1)
 
         next_event_loc = self.token_heap[0].next_match.end()
         # Remove all stale tokens, update them by searching ahead of the location of the current cursor
@@ -125,6 +126,7 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     first_cursor = TokenCursor(text, r"\{\{", r"\}\}")
     res_token_list = []
     tokenizer_stack = [first_cursor]
+    # test_thing = []
 
     while tokenizer_stack:
         curr_tokenizer = tokenizer_stack.pop()
@@ -133,13 +135,21 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
 
         while curr_token is not None:
             token_type, data = curr_token
+            # test_thing.append(data)
 
             if token_type is TokenType.DELIMITER:
                 raise Exception("Need to implement this case.")
+            # Don't bother adding comments to the list of tokens.
+            elif token_type is TokenType.COMMENT:
+                continue
 
             res_token_list.append(curr_token)
 
             curr_token = curr_tokenizer.get_next_token()
+
+    # Ensures tokenization worked as expected
+    # NOTE must change match group data to get this to pass
+    # assert text == "".join(test_thing)
 
     return res_token_list
 

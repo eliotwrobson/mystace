@@ -6,7 +6,9 @@ from collections import deque
 
 import typing_extensions as te
 
-from .tokenize import tokenize
+from .tokenize_new import TokenType, mustache_tokenizer
+
+# from .tokenize import tokenize
 from .util import html_escape
 
 # be returned
@@ -236,15 +238,18 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
         "",
     )
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
+    token_list = mustache_tokenizer(thing)
 
-    for token_type, token_data in tokenize(thing):
-        if token_type == "literal":
+    for token_type, token_data in token_list:  # tokenize(thing):
+        if token_type is TokenType.LITERAL:
             literal_node = MustacheTreeNode(TagType.LITERAL, token_data)
             work_stack[-1].children.append(literal_node)
 
-        elif token_type in {"section", "inverted section"}:
+        elif token_type in [TokenType.SECTION, TokenType.INVERTED_SECTION]:
             tag_type = (
-                TagType.SECTION if token_type == "section" else TagType.INVERTED_SECTION
+                TagType.SECTION
+                if token_type is TokenType.SECTION
+                else TagType.INVERTED_SECTION
             )
             section_node = MustacheTreeNode(tag_type, token_data)
             # Add section to list of children
@@ -253,20 +258,22 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             # Add section to work stack and descend in on the next iteration.
             work_stack.append(section_node)
 
-        elif token_type == "end":
+        elif token_type is TokenType.END_SECTION:
             assert work_stack[-1].data == token_data
             # Close the current section by popping off the end of the work stack.
             work_stack.pop()
 
-        elif token_type in {"variable", "no escape"}:
+        elif token_type in [TokenType.VARIABLE, TokenType.RAW_VARIABLE]:
             tag_type = (
-                TagType.VARIABLE if token_type == "variable" else TagType.VARIABLE_RAW
+                TagType.VARIABLE
+                if token_type is TokenType.VARIABLE
+                else TagType.VARIABLE_RAW
             )
             variable_node = MustacheTreeNode(tag_type, token_data)
             # Add section to list of children
             work_stack[-1].children.append(variable_node)
         else:
-            # print(token_type, token_data)
+            print(token_type, token_data)
             # assert_never(token_type)
             raise Exception
 

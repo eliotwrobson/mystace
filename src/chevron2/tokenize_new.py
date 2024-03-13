@@ -53,11 +53,13 @@ class TokenCursor:
     text: str
 
     def __init__(self, text: str, right_delim: str, left_delim: str) -> None:
+        # Using inline flags for more control over behavior, see
+        # https://docs.python.org/3/library/re.html#re.DOTALL
         patterns = [
-            (TokenType.COMMENT, r"\{\{!(.*?)\}\}"),
+            (TokenType.COMMENT, r"(?s)\{\{!(.*?)\}\}"),
             (TokenType.RAW_VARIABLE, r"\{\{\{(.*?)\}\}\}"),
             (TokenType.SECTION, r"\{\{#(.*?)\}\}"),
-            (TokenType.INVERTED_SECTION, r"\{\{^(.*?)\}\}"),
+            (TokenType.INVERTED_SECTION, r"\{\{\^(.*?)\}\}"),
             (TokenType.END_SECTION, r"\{\{/(.*?)\}\}"),
             (TokenType.DELIMITER, r"\{\{=(.*?)=\}\}"),
             (TokenType.PARTIAL, r"\{\{>(.*?)\}\}"),
@@ -73,7 +75,7 @@ class TokenCursor:
             if match is None:
                 continue
 
-            print(pattern, match.start())
+            # print(pattern, match.start())
             token_heap.append(Token(match.start(), token_type, match, pattern))
 
         heapq.heapify(token_heap)
@@ -136,14 +138,11 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
         while curr_token is not None:
             token_type, data = curr_token
             # test_thing.append(data)
-
             if token_type is TokenType.DELIMITER:
                 raise Exception("Need to implement this case.")
             # Don't bother adding comments to the list of tokens.
-            elif token_type is TokenType.COMMENT:
-                continue
-
-            res_token_list.append(curr_token)
+            elif token_type is not TokenType.COMMENT:
+                res_token_list.append(curr_token)
 
             curr_token = curr_tokenizer.get_next_token()
 
@@ -152,79 +151,3 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     # assert text == "".join(test_thing)
 
     return res_token_list
-
-
-class MustacheTokenizer:
-    """A class that yields ."""
-
-    # __slots__: t.Tuple[str, ...] = ("_tokens",)
-
-    token_heap: t.List[Token]
-    text: str
-
-    def __init__(self, text: str, patterns: t.List[t.Tuple[TokenType, str]]) -> None:
-        self.text = text
-
-        token_heap = []
-
-        for token_type, pattern_str in patterns:
-            pattern = re.compile(pattern_str)
-            match = pattern.search(text)
-
-            if match is None:
-                continue
-
-            print(pattern, match.start())
-            token_heap.append(Token(match.start(), token_type, match, pattern))
-
-        heapq.heapify(token_heap)
-
-        self.token_heap = token_heap
-
-    def tokenize(self) -> t.Generator[t.Tuple[TokenType, re.Match], None, None]:
-        iters = 0
-        prev_end_loc = -1
-        while self.token_heap:
-            iters += 1
-            if iters > 100:
-                raise Exception
-
-            start_loc, token_type, match_obj, pattern = heapq.heappop(self.token_heap)
-
-            # If overlaps with something already seen, we should skip.
-            if start_loc >= prev_end_loc:
-                yield token_type, match_obj
-
-            end_loc = match_obj.end()
-            prev_end_loc = max(end_loc, prev_end_loc)
-            next_match = pattern.search(self.text, end_loc)
-
-            # If match is none, this pattern doesn't appear in the text anymore, so we
-            # can just throw away.
-            if next_match is not None:
-                heapq.heappush(
-                    self.token_heap,
-                    Token(next_match.start(), token_type, next_match, pattern),
-                )
-
-
-class Lexer:
-    """
-    The core lexer.
-    """
-
-    # __slots__: Tuple[str, ...] = ("tokens", "blank_chars")
-
-    def __init__(self, text: str) -> None:
-        token_patterns = [
-            (TokenType.RAW_VARIABLE, r"\{\{\{"),
-            (TokenType.VARIABLE, r"\{\{(.*?)\}\}"),
-        ]
-        self.tokens = MustacheTokenizer(text, token_patterns)
-        # self.blank_chars = (
-        #    frozenset((" ", "\t")) if blank_chars is None else frozenset(blank_chars)
-        # )
-
-    def tokenize(self):
-        for token_type, token_data in self.tokens.tokenize():
-            print(token_type, token_data)

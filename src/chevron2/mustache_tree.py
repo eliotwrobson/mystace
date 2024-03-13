@@ -239,7 +239,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     )
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
     token_list = mustache_tokenizer(thing)
-
+    # print(token_list)
     for token_type, token_data in token_list:  # tokenize(thing):
         if token_type is TokenType.LITERAL:
             literal_node = MustacheTreeNode(TagType.LITERAL, token_data)

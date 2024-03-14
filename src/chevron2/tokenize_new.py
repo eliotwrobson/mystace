@@ -61,6 +61,7 @@ class TokenCursor:
         patterns = [
             (TokenType.COMMENT, r"(?s)\{\{!(.*?)\}\}"),
             (TokenType.RAW_VARIABLE, r"\{\{\{(.*?)\}\}\}"),
+            (TokenType.RAW_VARIABLE, r"\{\{&(.*?)\}\}"),
             (TokenType.SECTION, r"\{\{#(.*?)\}\}"),
             (TokenType.INVERTED_SECTION, r"\{\{\^(.*?)\}\}"),
             (TokenType.END_SECTION, r"\{\{/(.*?)\}\}"),
@@ -135,7 +136,7 @@ class TokenCursor:
 
         new_token_type = self.token_heap[0].type
         # NOTE This uses the fact that each match group has a single unknown.
-        new_token_data = self.token_heap[0].next_match.group(1)
+        new_token_data = self.token_heap[0].next_match.group(1).strip()
 
         next_event_loc = self.token_heap[0].next_match.end()
         # Remove all stale tokens, update them by searching ahead of the location of the current cursor
@@ -174,7 +175,7 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
                 raise Exception("Need to implement this case.")
             # Need to add comments to the list of tokens because of whitespace issues.
 
-            ic(curr_token)
+            # ic(curr_token)
 
             res_token_list.append(curr_token)
 
@@ -185,7 +186,7 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     # Ensures tokenization worked as expected
     # NOTE must change match group data to get this to pass
     # assert text == "".join(test_thing)
-    ic(res_token_list)
+    # ic(res_token_list)
     return res_token_list
 
 
@@ -200,16 +201,22 @@ def clear_whitespace_surrounding_tag(
     tag.
     """
 
-    TARGET_TOKENS = (TokenType.COMMENT,)
+    TARGET_TOKENS = (
+        TokenType.COMMENT,
+        TokenType.END_SECTION,
+        TokenType.INVERTED_SECTION,
+    )
 
     if len(token_list) < 2:
         return
 
     prev_type, prev_data = token_list[-2]
     curr_type, curr_data = token_list[-1]
-
+    # TODO the removal here is causing a bug with the
     if curr_type in TARGET_TOKENS:
-        if prev_type is TokenType.LITERAL and prev_data.isspace():
+        if prev_type is TokenType.LITERAL and (
+            prev_data.isspace() and prev_data != "\n"
+        ):
             token_list.pop(-2)
             return
     elif curr_type is TokenType.LITERAL and curr_data.isspace():

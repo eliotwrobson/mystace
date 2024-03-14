@@ -3,6 +3,8 @@ import re
 import typing as t
 from enum import Enum
 
+from icecream import ic
+
 # '!': 'comment',
 # '#': 'section',
 # '^': 'inverted section',
@@ -51,6 +53,7 @@ class TokenCursor:
     token_heap: t.List[Token]
     cursor_loc: int
     text: str
+    _remainder: t.Optional[t.Tuple[TokenType, str]]
 
     def __init__(self, text: str, right_delim: str, left_delim: str) -> None:
         # Using inline flags for more control over behavior, see
@@ -83,26 +86,50 @@ class TokenCursor:
         self.token_heap = token_heap
         self.cursor_loc = 0
         self.text = text
+        self._remainder = None
 
     def get_next_token(self) -> t.Optional[t.Tuple[TokenType, str]]:
+        if self._remainder is not None:
+            res = self._remainder
+            self._remainder = None
+            self.cursor_loc = len(self.text)
+
+            return res
+
         # If at the end, no more tokens, so just return None
-        if self.cursor_loc == len(self.text):
+        elif self.cursor_loc == len(self.text):
             return None
 
         # If no more tokens, return the final literal
         elif not self.token_heap:
-            res_string = self.text[self.cursor_loc : len(self.text)]
-            self.cursor_loc = len(self.text)
-            return TokenType.LITERAL, res_string
+            newline_loc = self.text.find("\n", self.cursor_loc)
+            # ic(self.text[self.cursor_loc : len(self.text)])
+            if newline_loc == -1:
+                res_string = self.text[self.cursor_loc : len(self.text)]
+                self.cursor_loc = len(self.text)
+                return TokenType.LITERAL, res_string
+
+            first_res_string = self.text[self.cursor_loc : newline_loc + 1]
+            second_res_string = self.text[newline_loc + 1 : len(self.text)]
+            # print("first: ", repr(first_res_string))
+            # print("second: ", repr(second_res_string))
+            self._remainder = (TokenType.LITERAL, second_res_string)
+
+            return TokenType.LITERAL, first_res_string
 
         elif self.token_heap[0].loc > self.cursor_loc:
             next_event_loc = self.token_heap[0].loc
 
+            # TODO to speed this up, use rfind to get the last location before
+            # the next tag event.
             newline_idx = self.text.find("\n", self.cursor_loc)
+            # ic(self.text[self.cursor_loc : self.cursor_loc + 5])
+            # ic(newline_idx)
             if newline_idx >= 0:
                 next_event_loc = min(newline_idx + 1, next_event_loc)
 
             literal_string = self.text[self.cursor_loc : next_event_loc]
+            # ic(literal_string)
             self.cursor_loc = next_event_loc
             return TokenType.LITERAL, literal_string
 
@@ -145,9 +172,13 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
             # test_thing.append(data)
             if token_type is TokenType.DELIMITER:
                 raise Exception("Need to implement this case.")
-            # Don't bother adding comments to the list of tokens.
-            elif token_type is not TokenType.COMMENT:
-                res_token_list.append(curr_token)
+            # Need to add comments to the list of tokens because of whitespace issues.
+
+            ic(curr_token)
+
+            res_token_list.append(curr_token)
+
+            clear_whitespace_surrounding_tag(res_token_list)
 
             curr_token = curr_tokenizer.get_next_token()
 
@@ -156,3 +187,59 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     # assert text == "".join(test_thing)
 
     return res_token_list
+
+
+ic("hey")
+
+
+def clear_whitespace_surrounding_tag(
+    token_list: t.List[t.Tuple[TokenType, str]],
+) -> None:
+    """
+    Check the last three indices to see if we need to clear the whitespace around a
+    tag.
+    """
+
+    if len(token_list) < 2:
+        return
+
+    if len(token_list) >= 3:
+        back_type, back_data = token_list[-3]
+    else:
+        back_type = TokenType.LITERAL
+        back_data = "\n"
+
+    # ic("here")
+    # ic(token_list)
+    mid_type, _ = token_list[-2]
+    front_type, front_data = token_list[-1]
+    # ic(token_list)
+    TARGET_TOKENS = (TokenType.COMMENT,)
+
+    if not (
+        back_type is TokenType.LITERAL
+        and front_type is TokenType.LITERAL
+        and mid_type in TARGET_TOKENS
+    ):
+        return
+    # print("HERE")
+    # ic(mid_type)
+    print(repr(back_data))
+    # ic(back_data.endswith("\n"))
+    print(repr(front_data))
+    # ic("done")
+
+    if not front_data.isspace():
+        return
+
+    elif back_data.endswith("\n"):
+        token_list.pop()
+
+    elif back_data.isspace():
+        token_list.pop(-3)
+        token_list.pop()
+
+    if token_list[-1][0] is TokenType.COMMENT:
+        token_list.pop()
+
+    ic(token_list)

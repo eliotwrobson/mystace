@@ -272,6 +272,8 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             variable_node = MustacheTreeNode(tag_type, token_data)
             # Add section to list of children
             work_stack[-1].children.append(variable_node)
+        elif token_type is TokenType.COMMENT:
+            pass
         else:
             print(token_type, token_data)
             # assert_never(token_type)

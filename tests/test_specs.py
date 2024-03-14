@@ -10,7 +10,6 @@ from pathlib import Path
 
 from chevron2 import render_from_template
 from combustache import render
-from icecream import ic
 
 # Names of tests to skip for now that fail, TODO debug these.
 # Not a huuuuuge deal, since most of the failed ones are in the optional section
@@ -114,7 +113,7 @@ def test_spec_from_folder(datadir: Path) -> None:
             if did_case_fail:
                 # print(full_test_case_name)
                 print(repr(result), repr(test_case["expected"]))
-            ic(did_case_fail)
+            # ic(did_case_fail)
             any_fail = any_fail or did_case_fail
 
             assert not any_fail

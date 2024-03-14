@@ -187,6 +187,7 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     # NOTE must change match group data to get this to pass
     # assert text == "".join(test_thing)
     # ic(res_token_list)
+    print(res_token_list)
     return res_token_list
 
 
@@ -212,16 +213,18 @@ def clear_whitespace_surrounding_tag(
 
     prev_type, prev_data = token_list[-2]
     curr_type, curr_data = token_list[-1]
+    print("about to remove: ", token_list)
     # TODO the removal here is causing a bug with the
     if curr_type in TARGET_TOKENS:
-        if prev_type is TokenType.LITERAL and (
-            prev_data.isspace() and prev_data != "\n"
+        if (
+            prev_type is TokenType.LITERAL
+            and (prev_data.isspace() and prev_data != "\n")
+            and (len(token_list) < 3 or token_list[-3][0] is TokenType.LITERAL)
         ):
             token_list.pop(-2)
             return
     elif curr_type is TokenType.LITERAL and curr_data.isspace():
         if prev_type in TARGET_TOKENS:
-            print(token_list)
             if (
                 len(token_list) < 3
                 or token_list[-3][0] is not TokenType.LITERAL

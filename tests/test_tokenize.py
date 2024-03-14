@@ -7,6 +7,7 @@ def test_lexer() -> None:
         {{#thing}}
             {{#inner_thing}}
             hello
+            goodbye
             {{/inner_thing}}
             {{outer_thing}}
         {{/thing}}

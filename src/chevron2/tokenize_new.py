@@ -185,7 +185,7 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     # Ensures tokenization worked as expected
     # NOTE must change match group data to get this to pass
     # assert text == "".join(test_thing)
-
+    ic(res_token_list)
     return res_token_list
 
 
@@ -200,46 +200,25 @@ def clear_whitespace_surrounding_tag(
     tag.
     """
 
+    TARGET_TOKENS = (TokenType.COMMENT,)
+
     if len(token_list) < 2:
         return
 
-    if len(token_list) >= 3:
-        back_type, back_data = token_list[-3]
-    else:
-        back_type = TokenType.LITERAL
-        back_data = "\n"
+    prev_type, prev_data = token_list[-2]
+    curr_type, curr_data = token_list[-1]
 
-    # ic("here")
-    # ic(token_list)
-    mid_type, _ = token_list[-2]
-    front_type, front_data = token_list[-1]
-    # ic(token_list)
-    TARGET_TOKENS = (TokenType.COMMENT,)
-
-    if not (
-        back_type is TokenType.LITERAL
-        and front_type is TokenType.LITERAL
-        and mid_type in TARGET_TOKENS
-    ):
-        return
-    # print("HERE")
-    # ic(mid_type)
-    print(repr(back_data))
-    # ic(back_data.endswith("\n"))
-    print(repr(front_data))
-    # ic("done")
-
-    if not front_data.isspace():
-        return
-
-    elif back_data.endswith("\n"):
-        token_list.pop()
-
-    elif back_data.isspace():
-        token_list.pop(-3)
-        token_list.pop()
-
-    if token_list[-1][0] is TokenType.COMMENT:
-        token_list.pop()
-
-    ic(token_list)
+    if curr_type in TARGET_TOKENS:
+        if prev_type is TokenType.LITERAL and prev_data.isspace():
+            token_list.pop(-2)
+            return
+    elif curr_type is TokenType.LITERAL and curr_data.isspace():
+        if prev_type in TARGET_TOKENS:
+            print(token_list)
+            if (
+                len(token_list) < 3
+                or token_list[-3][0] is not TokenType.LITERAL
+                or token_list[-3][1].endswith("\n")
+            ):
+                token_list[-1] = (TokenType.LITERAL, "")
+                return

@@ -97,6 +97,11 @@ class TokenCursor:
 
         elif self.token_heap[0].loc > self.cursor_loc:
             next_event_loc = self.token_heap[0].loc
+
+            newline_idx = self.text.find("\n", self.cursor_loc)
+            if newline_idx >= 0:
+                next_event_loc = min(newline_idx + 1, next_event_loc)
+
             literal_string = self.text[self.cursor_loc : next_event_loc]
             self.cursor_loc = next_event_loc
             return TokenType.LITERAL, literal_string

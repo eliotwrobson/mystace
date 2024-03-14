@@ -116,4 +116,4 @@ def test_spec_from_folder(datadir: Path) -> None:
 
             any_fail = any_fail or did_case_fail
 
-    assert not any_fail
+            assert not any_fail

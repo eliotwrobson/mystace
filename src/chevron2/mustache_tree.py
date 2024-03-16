@@ -231,12 +231,93 @@ class MustacheRenderer:
         return cls(create_mustache_tree(template_str))
 
 
+def handle_final_line_clear(
+    token_list: t.List, target_tokens: t.Tuple[TokenType, ...]
+) -> None:
+    if len(token_list) >= 2 and token_list[-1][0] in target_tokens:
+        prev_type, prev_data = token_list[-2]
+
+        # Prev token is a whitespace literal we can possibly delete
+        if (
+            prev_type is TokenType.LITERAL
+            and prev_data.isspace()
+            and not prev_data.endswith("\n")
+        ):
+            # Delete if the previous token is a literal newline (if it exists)
+            if len(token_list) == 2:
+                token_list.pop(-2)
+                return
+
+            skip_prev_type, skip_prev_data = token_list[-3]
+
+            if skip_prev_type is TokenType.LITERAL and skip_prev_data.endswith("\n"):
+                token_list.pop(-2)
+
+
 def process_raw_token_list(raw_token_list: t.List) -> t.List:
+    TARGET_TOKENS = (
+        TokenType.COMMENT,
+        TokenType.END_SECTION,
+        TokenType.INVERTED_SECTION,
+    )
+
+    res_token_list = []
     # TODO do token whitespace processing and partial replacement here.
     for token in raw_token_list:
-        print(token)
+        token_type, token_data = token
+        print(res_token_list)
+        # TODO to actually do this, we need to know whether this token is the start of a line and not something
+        # coming after a tag
+        curr_token_can_skip = (
+            token_type is TokenType.LITERAL
+            and token_data.isspace()
+            and token_data.endswith("\n")
+        )
 
-    assert False
+        prev_token_can_skip = (
+            len(res_token_list) >= 1 and res_token_list[-1][0] in TARGET_TOKENS
+        )
+
+        remove_double_prev = False
+        # TODO later on, this condition needs to be based on whether there are other tags on this
+        # line. Refactor once the line offset of each literal gets recorded, needed for partial
+        # evaluation
+        double_prev_can_skip = False
+
+        # If the current token is a whitespace literal going onto the next line, and
+        # the previous token is a token that should be on a standalone line.
+        if curr_token_can_skip and prev_token_can_skip:
+            # If the spaces behind the tag are a whitespace-only literal that
+            # doesn't start a new line, get rid of it
+            if len(res_token_list) >= 2:
+                double_prev_type, double_prev_data = res_token_list[-2]
+
+                if double_prev_type is TokenType.LITERAL:
+                    double_prev_can_skip = (
+                        double_prev_data.isspace() or double_prev_data.endswith("\n")
+                    )
+
+                    remove_double_prev = (
+                        double_prev_data.isspace()
+                        and not double_prev_data.endswith("\n")
+                    )
+            else:
+                double_prev_can_skip = True
+
+        # If we skip inserting the current token, try popping the one two tokens
+        # ago if needed
+        if double_prev_can_skip and prev_token_can_skip and curr_token_can_skip:
+            if remove_double_prev:
+                res_token_list.pop(-2)
+        else:
+            res_token_list.append(token)
+
+    handle_final_line_clear(res_token_list, TARGET_TOKENS)
+
+    print(res_token_list)
+    # Don't require a trailing newline to remove leading whitespace.
+
+    return res_token_list
 
 
 def create_mustache_tree(thing: str) -> MustacheTreeNode:

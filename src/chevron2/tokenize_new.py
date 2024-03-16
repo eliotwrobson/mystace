@@ -111,11 +111,8 @@ class TokenCursor:
             #     self.cursor_loc,
             #     len(self.text),
             # )
-            if (
-                newline_loc == -1
-                or newline_loc == self.cursor_loc == len(self.text) - 1
-            ):
-                print("repr: ", repr(self.text[self.cursor_loc : len(self.text)]))
+            if newline_loc == -1 or newline_loc == len(self.text) - 1:
+                # print("repr: ", repr(self.text[self.cursor_loc : len(self.text)]))
                 res_string = self.text[self.cursor_loc : len(self.text)]
                 self.cursor_loc = len(self.text)
                 return TokenType.LITERAL, res_string

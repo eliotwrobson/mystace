@@ -255,6 +255,9 @@ def handle_final_line_clear(
 
 
 def process_raw_token_list(raw_token_list: t.List) -> t.List:
+    # TODO I think this function can be simplified with a mark and remove algorithm,
+    # avoids edge cases related to going through on a single pass.
+
     TARGET_TOKENS = (
         TokenType.COMMENT,
         TokenType.END_SECTION,
@@ -293,19 +296,39 @@ def process_raw_token_list(raw_token_list: t.List) -> t.List:
                 double_prev_type, double_prev_data = res_token_list[-2]
 
                 if double_prev_type is TokenType.LITERAL:
-                    double_prev_can_skip = (
-                        double_prev_data.isspace() or double_prev_data.endswith("\n")
-                    )
+                    if len(res_token_list) == 2:
+                        remove_double_prev = (
+                            double_prev_data.isspace()
+                            and not double_prev_data.endswith("\n")
+                        )
 
-                    remove_double_prev = (
-                        double_prev_data.isspace()
-                        and not double_prev_data.endswith("\n")
-                    )
+                        double_prev_can_skip = (
+                            double_prev_data.isspace()
+                            or double_prev_data.endswith("\n")
+                        )
+                    else:
+                        # print("TRIPLE PREV CASE")
+                        triple_prev_type, triple_prev_data = res_token_list[-3]
+                        # print(triple_prev_type, triple_prev_data)
+                        remove_double_prev = (
+                            double_prev_data.isspace()
+                            and not double_prev_data.endswith("\n")
+                            and triple_prev_type is TokenType.LITERAL
+                            and triple_prev_data.endswith("\n")
+                        )
+
+                        double_prev_can_skip = double_prev_data.endswith("\n") or (
+                            double_prev_data.isspace()
+                            and triple_prev_type is TokenType.LITERAL
+                            and triple_prev_data.endswith("\n")
+                        )
+
             else:
                 double_prev_can_skip = True
 
         # If we skip inserting the current token, try popping the one two tokens
         # ago if needed
+        print(token, double_prev_can_skip, prev_token_can_skip, curr_token_can_skip)
         if double_prev_can_skip and prev_token_can_skip and curr_token_can_skip:
             if remove_double_prev:
                 res_token_list.pop(-2)

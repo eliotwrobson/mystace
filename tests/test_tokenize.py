@@ -1,6 +1,20 @@
 from chevron2 import mustache_tokenizer, render_from_template
 
 
+def test_temp_case() -> None:
+    data = {"bool": True, "two": "second"}
+    template = (
+        "{{#bool}}\n* first\n{{/bool}}\n* {{two}}\n{{#bool}}\n* third\n{{/bool}}\n"
+    )
+    expected = "* first\n* second\n* third\n"
+
+    res = render_from_template(template, data)
+    print("Result: ", repr(res))
+    print("Expected: ", repr(expected))
+
+    assert res == expected
+
+
 def test_lexer() -> None:
     template = """
         {{! random comment }}

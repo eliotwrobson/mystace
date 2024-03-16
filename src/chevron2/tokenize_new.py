@@ -104,8 +104,18 @@ class TokenCursor:
         # If no more tokens, return the final literal
         elif not self.token_heap:
             newline_loc = self.text.find("\n", self.cursor_loc)
-            # ic(self.text[self.cursor_loc : len(self.text)])
-            if newline_loc == -1:
+            # print("HERE")
+            # print(
+            #     repr(self.text[self.cursor_loc : len(self.text)]),
+            #     newline_loc,
+            #     self.cursor_loc,
+            #     len(self.text),
+            # )
+            if (
+                newline_loc == -1
+                or newline_loc == self.cursor_loc == len(self.text) - 1
+            ):
+                print("repr: ", repr(self.text[self.cursor_loc : len(self.text)]))
                 res_string = self.text[self.cursor_loc : len(self.text)]
                 self.cursor_loc = len(self.text)
                 return TokenType.LITERAL, res_string

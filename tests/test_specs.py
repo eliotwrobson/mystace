@@ -99,7 +99,7 @@ def test_spec_from_folder(datadir: Path) -> None:
 
             if full_test_case_name in SKIPPED_TESTS:
                 continue
-            print(full_test_case_name)
+            # print(full_test_case_name)
             # try:
             result = render_from_template(
                 test_case["template"],
@@ -111,9 +111,9 @@ def test_spec_from_folder(datadir: Path) -> None:
             #    did_case_fail = True
 
             if did_case_fail:
-                # print(full_test_case_name)
+                print(full_test_case_name)
                 print(repr(result), repr(test_case["expected"]))
             # ic(did_case_fail)
             any_fail = any_fail or did_case_fail
 
-            assert not any_fail
+        assert not any_fail

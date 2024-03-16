@@ -211,6 +211,7 @@ def clear_whitespace_surrounding_tag(
 
     TARGET_TOKENS = (
         TokenType.COMMENT,
+        TokenType.SECTION,
         TokenType.END_SECTION,
         TokenType.INVERTED_SECTION,
     )
@@ -220,7 +221,7 @@ def clear_whitespace_surrounding_tag(
 
     prev_type, prev_data = token_list[-2]
     curr_type, curr_data = token_list[-1]
-    print("about to remove: ", token_list)
+    # print("about to remove: ", token_list)
     # TODO the removal here is causing a bug with the
     if curr_type in TARGET_TOKENS:
         if (

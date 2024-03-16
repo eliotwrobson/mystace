@@ -264,11 +264,12 @@ def process_raw_token_list(raw_token_list: t.List) -> t.List:
         TokenType.INVERTED_SECTION,
     )
 
+    indices_to_delete = set()
     res_token_list = []
     # TODO do token whitespace processing and partial replacement here.
-    for token in raw_token_list:
+    for i, token in enumerate(raw_token_list):
         token_type, token_data = token
-        print(res_token_list)
+
         # TODO to actually do this, we need to know whether this token is the start of a line and not something
         # coming after a tag
         curr_token_can_skip = (
@@ -328,17 +329,23 @@ def process_raw_token_list(raw_token_list: t.List) -> t.List:
 
         # If we skip inserting the current token, try popping the one two tokens
         # ago if needed
-        print(token, double_prev_can_skip, prev_token_can_skip, curr_token_can_skip)
+        # print(token, double_prev_can_skip, prev_token_can_skip, curr_token_can_skip)
         if double_prev_can_skip and prev_token_can_skip and curr_token_can_skip:
+            indices_to_delete.add(i)
             if remove_double_prev:
-                res_token_list.pop(-2)
-        else:
-            res_token_list.append(token)
+                indices_to_delete.add(i - 2)
+                # res_token_list.pop(-2)
+
+        res_token_list.append(token)
 
     handle_final_line_clear(res_token_list, TARGET_TOKENS)
 
-    print(res_token_list)
+    # print(res_token_list)
     # Don't require a trailing newline to remove leading whitespace.
+
+    res_token_list = [
+        elem for i, elem in enumerate(res_token_list) if i not in indices_to_delete
+    ]
 
     return res_token_list
 

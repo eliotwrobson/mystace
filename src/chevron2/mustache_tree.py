@@ -262,6 +262,7 @@ def process_raw_token_list(raw_token_list: t.List) -> t.List:
         TokenType.COMMENT,
         TokenType.END_SECTION,
         TokenType.INVERTED_SECTION,
+        TokenType.SECTION,
     )
 
     indices_to_delete = set()
@@ -288,12 +289,19 @@ def process_raw_token_list(raw_token_list: t.List) -> t.List:
         # evaluation
         double_prev_can_skip = False
 
+        # print(token_type, repr(token_data))
+        # print(curr_token_can_skip, prev_token_can_skip)
+        # print(res_token_list)
+
         # If the current token is a whitespace literal going onto the next line, and
         # the previous token is a token that should be on a standalone line.
         if curr_token_can_skip and prev_token_can_skip:
+            if len(res_token_list) == 1:
+                # print("HREE")
+                double_prev_can_skip = True
             # If the spaces behind the tag are a whitespace-only literal that
             # doesn't start a new line, get rid of it
-            if len(res_token_list) >= 2:
+            elif len(res_token_list) >= 2:
                 double_prev_type, double_prev_data = res_token_list[-2]
 
                 if double_prev_type is TokenType.LITERAL:
@@ -337,6 +345,7 @@ def process_raw_token_list(raw_token_list: t.List) -> t.List:
                 # res_token_list.pop(-2)
 
         res_token_list.append(token)
+        # print()
 
     handle_final_line_clear(res_token_list, TARGET_TOKENS)
 
@@ -360,7 +369,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     raw_token_list = mustache_tokenizer(thing)
     token_list = process_raw_token_list(raw_token_list)
     # print(token_list)
-    for token_type, token_data in token_list:  # tokenize(thing):
+    for token_type, token_data in token_list:
         if token_type is TokenType.LITERAL:
             literal_node = MustacheTreeNode(TagType.LITERAL, token_data)
             work_stack[-1].children.append(literal_node)

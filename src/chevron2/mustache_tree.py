@@ -231,6 +231,14 @@ class MustacheRenderer:
         return cls(create_mustache_tree(template_str))
 
 
+def process_raw_token_list(raw_token_list: t.List) -> t.List:
+    # TODO do token whitespace processing and partial replacement here.
+    for token in raw_token_list:
+        print(token)
+
+    assert False
+
+
 def create_mustache_tree(thing: str) -> MustacheTreeNode:
     # TODO make a special tag type for the root? Unsure
     root = MustacheTreeNode(
@@ -238,7 +246,8 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
         "",
     )
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
-    token_list = mustache_tokenizer(thing)
+    raw_token_list = mustache_tokenizer(thing)
+    token_list = process_raw_token_list(raw_token_list)
     # print(token_list)
     for token_type, token_data in token_list:  # tokenize(thing):
         if token_type is TokenType.LITERAL:

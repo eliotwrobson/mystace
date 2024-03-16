@@ -179,7 +179,7 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
 
             res_token_list.append(curr_token)
 
-            clear_whitespace_surrounding_tag(res_token_list)
+            # clear_whitespace_surrounding_tag(res_token_list)
 
             curr_token = curr_tokenizer.get_next_token()
 
@@ -187,7 +187,7 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     # NOTE must change match group data to get this to pass
     # assert text == "".join(test_thing)
     # ic(res_token_list)
-    print(res_token_list)
+    # print(res_token_list)
     return res_token_list
 
 

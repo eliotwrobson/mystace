@@ -3,8 +3,6 @@ import re
 import typing as t
 from enum import Enum
 
-from icecream import ic
-
 # '!': 'comment',
 # '#': 'section',
 # '^': 'inverted section',
@@ -196,47 +194,3 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     # ic(res_token_list)
     # print(res_token_list)
     return res_token_list
-
-
-ic("hey")
-
-
-def clear_whitespace_surrounding_tag(
-    token_list: t.List[t.Tuple[TokenType, str]],
-) -> None:
-    """
-    Check the last three indices to see if we need to clear the whitespace around a
-    tag.
-    """
-
-    TARGET_TOKENS = (
-        TokenType.COMMENT,
-        TokenType.SECTION,
-        TokenType.END_SECTION,
-        TokenType.INVERTED_SECTION,
-    )
-
-    if len(token_list) < 2:
-        return
-
-    prev_type, prev_data = token_list[-2]
-    curr_type, curr_data = token_list[-1]
-    # print("about to remove: ", token_list)
-    # TODO the removal here is causing a bug with the
-    if curr_type in TARGET_TOKENS:
-        if (
-            prev_type is TokenType.LITERAL
-            and (prev_data.isspace() and prev_data != "\n")
-            and (len(token_list) < 3 or token_list[-3][0] is TokenType.LITERAL)
-        ):
-            token_list.pop(-2)
-            return
-    elif curr_type is TokenType.LITERAL and curr_data.isspace():
-        if prev_type in TARGET_TOKENS:
-            if (
-                len(token_list) < 3
-                or token_list[-3][0] is not TokenType.LITERAL
-                or token_list[-3][1].endswith("\n")
-            ):
-                token_list[-1] = (TokenType.LITERAL, "")
-                return

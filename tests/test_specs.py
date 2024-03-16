@@ -85,10 +85,7 @@ def test_spec_from_folder(datadir: Path) -> None:
     # https://stackoverflow.com/questions/57702637/how-to-parametrize-tests-with-json-array-test-data-using-pytest-in-python
     any_fail = False
     for test_path in datadir.iterdir():
-        if test_path.name in (
-            "delimiters.json",
-            "partials.json",
-        ) or test_path.name.startswith("~"):
+        if test_path.name in ("delimiters.json",) or test_path.name.startswith("~"):
             continue
 
         with test_path.open() as test_file:
@@ -104,7 +101,7 @@ def test_spec_from_folder(datadir: Path) -> None:
             result = render_from_template(
                 test_case["template"],
                 test_case["data"],
-                partials=test_case.get("partials", {}),
+                partials=test_case.get("partials", None),
             )
             did_case_fail = result != test_case["expected"]
             # except Exception:

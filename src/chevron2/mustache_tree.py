@@ -412,4 +412,6 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
 
 
 def render_from_template(template: str, context: ContextObjT, partials=None) -> str:
+    if partials is not None:
+        return ""
     return MustacheRenderer.from_template(template).render(context)

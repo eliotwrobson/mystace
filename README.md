@@ -7,7 +7,8 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
-A Python implementation of the [mustache templating language](http://mustache.github.io).
+A Python implementation of the [{{mustache}}](http://mustache.github.io) templating language. It's compliant with
+the [specifications](https://github.com/mustache/spec) up to v1.4.1.
 
 Why chevron2?
 ------------
@@ -16,8 +17,7 @@ I'm glad you asked!
 
 ### chevron2 is fast ###
 
-Chevron runs in less than half the time of [pystache](http://github.com/defunkt/pystache) (Which is not even up to date on the spec).
-And in about 70% the time of [Stache](https://github.com/hyperturtle/Stache) (A 'trimmed' version of mustache, also not spec compliant).
+Included microbenchmarks show mystace heavily outperforming all other libraries tested.
 
 ### chevron is pep8 ###
 

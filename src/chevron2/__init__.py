@@ -27,19 +27,14 @@ from chevron2.exceptions import (
     MissingClosingTagError,
     StrayClosingTagError,
 )
-from chevron2.main import cache_clear, render
 from chevron2.mustache_tree import (
     MustacheRenderer,
     create_mustache_tree,
     render_from_template,
 )
-from chevron2.tokenize import tokenize
 from chevron2.tokenize_new import mustache_tokenizer
 
 __all__ = [
-    "render",
-    "cache_clear",
-    "tokenize",
     "Chevron2Error",
     "DelimiterError",
     "MissingClosingTagError",

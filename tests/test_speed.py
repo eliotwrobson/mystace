@@ -66,7 +66,7 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
         # Random object
         my_random = random.Random(seed)
 
-        names = {}
+        names: t.Dict = {}
 
         def flatten_keys_from_scopes(scopes):
             def flatten_keys(scope):
@@ -301,7 +301,7 @@ def test_large(
     # TODO turn up the test case size later.
     n = 100
 
-    template, names = test_case_generator(n)
+    template, names = test_case_generator(n)  # type: ignore
 
     if render_function_name == "chevron2":
         # NOTE Benchmarking with this isn't totally cheating since some of these libraries

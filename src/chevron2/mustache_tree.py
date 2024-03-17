@@ -9,7 +9,7 @@ from collections import deque
 
 import typing_extensions as te
 
-from .exceptions import MissingClosingTagError, StrayClosingTagError
+from .exceptions import MissingClosingTagError, NodeHasNoChildren, StrayClosingTagError
 from .tokenize_new import TokenTuple, TokenType, mustache_tokenizer
 
 # from .tokenize import tokenize
@@ -100,18 +100,6 @@ class ContextNode:
         return [new_stack]
 
 
-# '!': 'comment',
-# '#': 'section',
-# '^': 'inverted section',
-# '/': 'end',
-# '>': 'partial',
-# '=': 'set delimiter?',
-# '{': 'no escape?',
-# '&': 'no escape'
-
-
-# TODO delete some of the tag types that don't appear in the syntax tree,
-# like comments and section ends.
 class TagType(enum.Enum):
     """
     Types of tags that can appear in a tree,
@@ -132,7 +120,7 @@ class MustacheTreeNode:
 
     tag_type: TagType
     data: str
-    children: t.List[MustacheTreeNode]
+    children: t.Optional[t.List[MustacheTreeNode]]
 
     def __init__(
         self,
@@ -141,7 +129,23 @@ class MustacheTreeNode:
     ) -> None:
         self.tag_type = tag_type
         self.data = data
-        self.children = []
+
+        # ROOT = -1
+        # LITERAL = 0
+        # SECTION = 2
+        # INVERTED_SECTION = 3
+        # PARTIAL = 5
+        # VARIABLE = 6
+        # VARIABLE_RAW = 7
+
+        if tag_type in (
+            TagType.ROOT,
+            TagType.SECTION,
+            TagType.INVERTED_SECTION,
+        ):
+            self.children = []
+        else:
+            self.children = None
 
     def recursive_display(self) -> str:
         res_str = self.__repr__() + "\n"
@@ -152,6 +156,11 @@ class MustacheTreeNode:
         return res_str
 
     def add_child(self, node: MustacheTreeNode) -> None:
+        if self.children is None:
+            raise NodeHasNoChildren(
+                f"Mustache tree node of type {self.tag_type} has no children."
+            )
+
         self.children.append(node)
 
     def __repr__(self) -> str:

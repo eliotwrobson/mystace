@@ -357,7 +357,7 @@ def test_large(
         )
         res = my_locals["res"]
         subprocess.Popen(
-            f"flameprof cprofile_stats/{request.node.name}.cprofile > cprofile_stats/{request.node.name}.svg",
+            f"python -m flameprof cprofile_stats/{request.node.name}.cprofile > cprofile_stats/{request.node.name}.svg",
             shell=True,
         )
     except Exception:

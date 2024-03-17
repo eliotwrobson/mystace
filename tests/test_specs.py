@@ -101,7 +101,7 @@ def test_spec_from_folder(datadir: Path) -> None:
             result = render_from_template(
                 test_case["template"],
                 test_case["data"],
-                partials=test_case.get("partials", None),
+                partials_dict=test_case.get("partials", None),
             )
             did_case_fail = result != test_case["expected"]
             # except Exception:

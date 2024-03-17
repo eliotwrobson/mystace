@@ -129,7 +129,14 @@ def deep_get(item: t.Any, key: str) -> t.Any:
 # '&': 'no escape'
 
 
+# TODO delete some of the tag types that don't appear in the syntax tree,
+# like comments and section ends.
 class TagType(enum.Enum):
+    """
+    Types of tags that can appear in a tree,
+    different from the kinds that can appear in general.
+    """
+
     ROOT = -1
     LITERAL = 0
     COMMENT = 1
@@ -173,10 +180,23 @@ class MustacheTreeNode:
 
 class MustacheRenderer:
     mustache_tree: MustacheTreeNode
+    partials_dict: t.Dict[str, MustacheTreeNode]
 
-    def __init__(self, mustache_tree: MustacheTreeNode) -> None:
+    def __init__(
+        self,
+        mustache_tree: MustacheTreeNode,
+        partials_dict: t.Optional[t.Dict[str, MustacheTreeNode]] = None,
+    ) -> None:
         assert mustache_tree.tag_type is TagType.ROOT
         self.mustache_tree = mustache_tree
+
+        if partials_dict is not None:
+            for partial_tree in partials_dict.values():
+                assert partial_tree.tag_type is TagType.ROOT
+
+            self.partials_dict = partials_dict
+        else:
+            self.partials_dict = {}
 
     def render(self, context: ContextObjT) -> str:
         res_list = []
@@ -224,11 +244,34 @@ class MustacheRenderer:
                     for child_node in reversed(curr_node.children):
                         work_deque.appendleft((child_node, curr_context))
 
+            elif curr_node.tag_type is TagType.PARTIAL:
+                partial_tree = self.partials_dict.get(curr_node.data)
+
+                if partial_tree is None:
+                    continue
+
+                for child_node in reversed(partial_tree.children):
+                    work_deque.appendleft((child_node, curr_context))
+
         return "".join(res_list)
 
     @classmethod
-    def from_template(cls: te.Self, template_str: str) -> te.Self:
-        return cls(create_mustache_tree(template_str))
+    def from_template(
+        cls: te.Self,
+        template_str: str,
+        partials_dict: t.Optional[t.Dict[str, str]] = None,
+    ) -> te.Self:
+        partials_tree_dict = None
+
+        if partials_dict is not None:
+            partials_tree_dict = {
+                key: create_mustache_tree(partial_data)
+                for key, partial_data in partials_dict.items()
+            }
+
+        template_tree = create_mustache_tree(template_str)
+
+        return cls(template_tree, partials_tree_dict)
 
 
 def handle_final_line_clear(
@@ -403,6 +446,9 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             work_stack[-1].children.append(variable_node)
         elif token_type is TokenType.COMMENT:
             pass
+        elif token_type is TokenType.PARTIAL:
+            partial_node = MustacheTreeNode(TagType.PARTIAL, token_data)
+            work_stack[-1].children.append(partial_node)
         else:
             print(token_type, token_data)
             # assert_never(token_type)
@@ -411,7 +457,11 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     return root
 
 
-def render_from_template(template: str, context: ContextObjT, partials=None) -> str:
-    if partials is not None:
-        return ""
-    return MustacheRenderer.from_template(template).render(context)
+def render_from_template(
+    template: str,
+    context: ContextObjT,
+    partials_dict: t.Optional[t.Dict[str, str]] = None,
+) -> str:
+    # if partials_dic is not None:
+    #    return ""
+    return MustacheRenderer.from_template(template, partials_dict).render(context)

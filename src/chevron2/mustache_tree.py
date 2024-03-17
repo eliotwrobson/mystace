@@ -248,6 +248,7 @@ class MustacheRenderer:
                 if partial_tree is None:
                     continue
 
+                # TODO add class method that does this assert and yielding
                 assert partial_tree.children is not None
 
                 for child_node in reversed(partial_tree.children):

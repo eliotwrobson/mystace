@@ -5,12 +5,9 @@ import argparse
 import json
 from importlib.metadata import version
 from pathlib import Path
-from typing import Sequence
-
-from chevron2.main import render
 
 
-def cli(argv: Sequence[str] | None = None):
+def cli(argv=None):
     parser = argparse.ArgumentParser(
         prog="chevron2",
         description="an explosive mustache v1.4 implementation with lambdas",

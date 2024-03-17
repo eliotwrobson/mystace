@@ -8,16 +8,13 @@ import os
 import random
 import string
 import subprocess
+import sys
 import typing as t
 import warnings
 
 import chevron
 import chevron2
-import combustache
-import moosetash
-import pystache
 import pytest
-import ustache
 from faker import Faker
 from typing_extensions import assert_never
 
@@ -297,6 +294,9 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
     return _generate
 
 
+@pytest.mark.skipif(
+    sys.version_info <= (3, 10), reason="Requires latest versions of Python."
+)
 @pytest.mark.parametrize("render_function_name", t.get_args(RenderFunctionT))
 @pytest.mark.parametrize(
     "test_case_generator",
@@ -326,13 +326,21 @@ def test_large(
     elif render_function_name == "chevron":
         render_function = chevron.render
     elif render_function_name == "combustache":
+        import combustache
+
         render_function = combustache.render
     elif render_function_name == "moosetash":
+        import moosetash
+
         # Use the fast mode for this
         render_function = moosetash.render
     elif render_function_name == "pystache":
+        import pystache
+
         render_function = pystache.render
     elif render_function_name == "ustache":
+        import ustache
+
         render_function = ustache.render
     else:
         assert_never(render_function_name)

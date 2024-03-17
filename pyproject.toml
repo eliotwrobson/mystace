@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
+python = ">=3.8"
 
 [tool.poetry.group.dev]
 optional = true
@@ -51,8 +51,8 @@ testpaths = "tests"
 required_plugins = ["pytest-benchmark", "pytest-datadir"]
 
 [tool.coverage.run]
-# Add in all server files for the course
-include = ["src/chevron2"]
+# Add in all library files.
+include = ["src/chevron2/*"]
 # Omit init files
 omit = ["*/__init__.py"]
 

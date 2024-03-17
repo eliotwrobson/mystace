@@ -50,6 +50,12 @@ build-backend = "poetry.core.masonry.api"
 testpaths = "tests"
 required_plugins = ["pytest-benchmark", "pytest-datadir"]
 
+[tool.coverage.run]
+# Add in all server files for the course
+include = ["src/chevron2"]
+# Omit init files
+omit = ["*/__init__.py"]
+
 [tool.mypy]
 python_version = "3.8"
 

@@ -39,7 +39,14 @@ class TokenType(Enum):
         return NotImplemented
 
 
-class Token(t.NamedTuple):
+class TokenTuple(t.NamedTuple):
+    # TODO add "offset" as an attribute to this tuple, will be used
+    # by partials to compute indentation.
+    type: TokenType
+    data: str
+
+
+class HeapToken(t.NamedTuple):
     loc: int
     type: TokenType
     next_match: re.Match
@@ -51,15 +58,14 @@ class TokenCursor:
     A token cursor, yielding tokens with a given delimiter.
     """
 
-    token_heap: t.List[Token]
+    token_heap: t.List[HeapToken]
     cursor_loc: int
     text: str
-    _remainder: t.Optional[t.Tuple[TokenType, str]]
+    _remainder: t.Optional[TokenTuple]
 
     def __init__(self, text: str, left_delim: str, right_delim: str) -> None:
         left_delim = re.escape(left_delim)
         right_delim = re.escape(right_delim)
-        print(right_delim)
 
         # Using inline flags for more control over behavior, see
         # https://docs.python.org/3/library/re.html#re.DOTALL
@@ -84,7 +90,7 @@ class TokenCursor:
             if match is None:
                 continue
 
-            token_heap.append(Token(match.start(), token_type, match, pattern))
+            token_heap.append(HeapToken(match.start(), token_type, match, pattern))
 
         heapq.heapify(token_heap)
 
@@ -93,7 +99,7 @@ class TokenCursor:
         self.text = text
         self._remainder = None
 
-    def get_next_token(self) -> t.Optional[t.Tuple[TokenType, str]]:
+    def get_next_token(self) -> t.Optional[TokenTuple]:
         if self._remainder is not None:
             res = self._remainder
             self._remainder = None
@@ -108,42 +114,36 @@ class TokenCursor:
         # If no more tokens, return the final literal
         elif not self.token_heap:
             newline_loc = self.text.find("\n", self.cursor_loc)
-            # print("HERE")
-            # print(
-            #     repr(self.text[self.cursor_loc : len(self.text)]),
-            #     newline_loc,
-            #     self.cursor_loc,
-            #     len(self.text),
-            # )
+
             if newline_loc == -1 or newline_loc == len(self.text) - 1:
-                # print("repr: ", repr(self.text[self.cursor_loc : len(self.text)]))
                 res_string = self.text[self.cursor_loc : len(self.text)]
                 self.cursor_loc = len(self.text)
-                return TokenType.LITERAL, res_string
+                return TokenTuple(TokenType.LITERAL, res_string)
 
             first_res_string = self.text[self.cursor_loc : newline_loc + 1]
             second_res_string = self.text[newline_loc + 1 : len(self.text)]
-            # print("first: ", repr(first_res_string))
-            # print("second: ", repr(second_res_string))
-            self._remainder = (TokenType.LITERAL, second_res_string)
+            self._remainder = TokenTuple(TokenType.LITERAL, second_res_string)
 
-            return TokenType.LITERAL, first_res_string
+            return TokenTuple(TokenType.LITERAL, first_res_string)
 
         elif self.token_heap[0].loc > self.cursor_loc:
             next_event_loc = self.token_heap[0].loc
 
             # TODO to speed this up, use rfind to get the last location before
             # the next tag event.
+            # NOTE I think the edge case here is if the newline is
+            # at the location of the current cursor.
             newline_idx = self.text.find("\n", self.cursor_loc)
-            # ic(self.text[self.cursor_loc : self.cursor_loc + 5])
-            # ic(newline_idx)
+            # newline_idx = self.text.rfind("\n", self.cursor_loc, next_event_loc - 1)
+
+            # assert newline_idx == self.text.rfind("\n", self.cursor_loc, next_event_loc)
             if newline_idx >= 0:
                 next_event_loc = min(newline_idx + 1, next_event_loc)
 
             literal_string = self.text[self.cursor_loc : next_event_loc]
-            # ic(literal_string)
+
             self.cursor_loc = next_event_loc
-            return TokenType.LITERAL, literal_string
+            return TokenTuple(TokenType.LITERAL, literal_string)
 
         new_token_type = self.token_heap[0].type
         # NOTE This uses the fact that each match group has a single unknown.
@@ -160,19 +160,18 @@ class TokenCursor:
             if next_match is not None:
                 heapq.heappush(
                     self.token_heap,
-                    Token(next_match.start(), token_type, next_match, pattern),
+                    HeapToken(next_match.start(), token_type, next_match, pattern),
                 )
 
         self.cursor_loc = next_event_loc
-        return new_token_type, new_token_data
+        return TokenTuple(new_token_type, new_token_data)
 
 
-def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
+def mustache_tokenizer(text: str) -> t.List[TokenTuple]:
     # Different tokenizers to deal with the stupid delimiter swaps
     first_cursor = TokenCursor(text, R"{{", R"}}")
     res_token_list = []
     tokenizer_stack = [first_cursor]
-    # test_thing = []
 
     while tokenizer_stack:
         curr_tokenizer = tokenizer_stack.pop()
@@ -180,23 +179,16 @@ def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
         curr_token = curr_tokenizer.get_next_token()
 
         while curr_token is not None:
-            token_type, data = curr_token
-            # test_thing.append(data)
-            if token_type is TokenType.DELIMITER:
-                raise Exception("Need to implement this case.")
-            # Need to add comments to the list of tokens because of whitespace issues.
+            # token_type, data = curr_token
 
-            # ic(curr_token)
+            if curr_token.type is TokenType.DELIMITER:
+                raise Exception("Need to implement this case.")
 
             res_token_list.append(curr_token)
-
-            # clear_whitespace_surrounding_tag(res_token_list)
 
             curr_token = curr_tokenizer.get_next_token()
 
     # Ensures tokenization worked as expected
     # NOTE must change match group data to get this to pass
     # assert text == "".join(test_thing)
-    # ic(res_token_list)
-    # print(res_token_list)
     return res_token_list

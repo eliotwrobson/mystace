@@ -6,6 +6,8 @@ import json
 from importlib.metadata import version
 from pathlib import Path
 
+from .mustache_tree import render_from_template
+
 
 def cli(argv=None):
     parser = argparse.ArgumentParser(
@@ -106,10 +108,10 @@ def cli(argv=None):
                 partial_name = path.name.removesuffix(args.partial_ext)
                 partials[partial_name] = file.read()
 
-    left_delimiter = args.left_delimiter
-    right_delimiter = args.right_delimiter
+    # left_delimiter = args.left_delimiter
+    # right_delimiter = args.right_delimiter
 
-    output = render(template, data, partials, left_delimiter, right_delimiter)
+    output = render_from_template(template, data, partials)
     args.output.write(output)
 
 

@@ -47,8 +47,12 @@ def generate_test_case_nested(n: int) -> TestCaseT:
         old_template, old_data = _runner(n // 2)
 
         curr_name = fake.unique.word()
-        data_dict = {curr_name: [copy.deepcopy(old_data), copy.deepcopy(old_data)]}
-        template = "{{#" + curr_name + "}}" + old_template + "{{/" + curr_name + "}}"
+        data_dict: t.Dict = {
+            curr_name: [copy.deepcopy(old_data), copy.deepcopy(old_data)]
+        }
+        template: str = (
+            "{{#" + curr_name + "}}" + old_template + "{{/" + curr_name + "}}"
+        )
         return template, data_dict
 
     return _runner(n)

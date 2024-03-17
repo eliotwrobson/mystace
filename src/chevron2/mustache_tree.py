@@ -157,7 +157,7 @@ class MustacheTreeNode:
 
     tag_type: TagType
     data: str
-    children: t.Optional[t.List[MustacheTreeNode]]
+    children: t.List[MustacheTreeNode]
 
     def __init__(
         self,
@@ -175,6 +175,9 @@ class MustacheTreeNode:
             res_str += "    " + child.recursive_display() + "\n"
 
         return res_str
+
+    def add_child(self, node: MustacheTreeNode) -> None:
+        self.children.append(node)
 
     def __repr__(self) -> str:
         if self.data:
@@ -301,7 +304,9 @@ def handle_final_line_clear(
                 token_list.pop(-2)
 
 
-def process_raw_token_list(raw_token_list: t.List) -> t.List:
+def process_raw_token_list(
+    raw_token_list: t.List[t.Tuple[TokenType, str]],
+) -> t.List[t.Tuple[TokenType, str]]:
     # TODO I think this function can be simplified with a mark and remove algorithm,
     # avoids edge cases related to going through on a single pass.
 
@@ -313,8 +318,8 @@ def process_raw_token_list(raw_token_list: t.List) -> t.List:
         TokenType.PARTIAL,
     )
 
-    indices_to_delete = set()
-    res_token_list = []
+    indices_to_delete: t.Set[int] = set()
+    res_token_list: t.List[t.Tuple[TokenType, str]] = []
     # TODO do token whitespace processing and partial replacement here.
     for i, token in enumerate(raw_token_list):
         token_type, token_data = token
@@ -420,7 +425,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     for token_type, token_data in token_list:
         if token_type is TokenType.LITERAL:
             literal_node = MustacheTreeNode(TagType.LITERAL, token_data)
-            work_stack[-1].children.append(literal_node)
+            work_stack[-1].add_child(literal_node)
 
         elif token_type in [TokenType.SECTION, TokenType.INVERTED_SECTION]:
             tag_type = (
@@ -430,7 +435,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             )
             section_node = MustacheTreeNode(tag_type, token_data)
             # Add section to list of children
-            work_stack[-1].children.append(section_node)
+            work_stack[-1].add_child(section_node)
 
             # Add section to work stack and descend in on the next iteration.
             work_stack.append(section_node)
@@ -450,12 +455,13 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             )
             variable_node = MustacheTreeNode(tag_type, token_data)
             # Add section to list of children
-            work_stack[-1].children.append(variable_node)
+
+            work_stack[-1].add_child(variable_node)
         elif token_type is TokenType.COMMENT:
             pass
         elif token_type is TokenType.PARTIAL:
             partial_node = MustacheTreeNode(TagType.PARTIAL, token_data)
-            work_stack[-1].children.append(partial_node)
+            work_stack[-1].add_child(partial_node)
         else:
             print(token_type, token_data)
             # assert_never(token_type)

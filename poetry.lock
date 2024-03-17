@@ -494,6 +494,17 @@ files = [
 ]
 
 [[package]]
+name = "types-chevron"
+version = "0.14.2.20240310"
+description = "Typing stubs for chevron"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-chevron-0.14.2.20240310.tar.gz", hash = "sha256:01e33dea521a369ca36669db44d42ccd355287edb432cd5ebe985297bce50505"},
+    {file = "types_chevron-0.14.2.20240310-py3-none-any.whl", hash = "sha256:3583ccabdf11fbcabad48f26cda8814f3983b238635736c5bd02aa2fce196820"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.10.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -542,4 +553,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4.0"
-content-hash = "c5fad5ede7bb812a6676d8549d157be198d8913fbd8a1441c146fdd9ddaf1a4a"
+content-hash = "95d2d02f6b1b0c3121bc2cce261907ec8e33e908a6d88c5a6f0649cd236c2051"

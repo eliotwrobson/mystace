@@ -261,7 +261,7 @@ class MustacheRenderer:
 
     @classmethod
     def from_template(
-        cls: te.Self,
+        cls: t.Type[te.Self],
         template_str: str,
         partials: t.Optional[t.Dict[str, str]] = None,
     ) -> te.Self:

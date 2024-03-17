@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import collections
+import typing as t
 
 import pytest
 from chevron2 import (
@@ -35,14 +36,14 @@ def test_unclosed_sections() -> None:
     test2 = {"template": "{{# section }} end of file"}
 
     with pytest.raises(Exception):
-        render_from_template(**test1)
-        render_from_template(**test2)
+        render_from_template(**test1)  # type: ignore
+        render_from_template(**test2)  # type: ignore
 
 
 def test_unicode_basic() -> None:
     args = {"template": "(╯°□°）╯︵ ┻━┻"}
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "(╯°□°）╯︵ ┻━┻"
 
     assert result == expected
@@ -51,7 +52,7 @@ def test_unicode_basic() -> None:
 def test_unicode_variable() -> None:
     args = {"template": "{{ table_flip }}", "data": {"table_flip": "(╯°□°）╯︵ ┻━┻"}}
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "(╯°□°）╯︵ ┻━┻"
 
     assert result == expected
@@ -63,7 +64,7 @@ def test_unicode_partial() -> None:
         "partials": {"table_flip": "(╯°□°）╯︵ ┻━┻"},
     }
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "(╯°□°）╯︵ ┻━┻"
 
     assert result == expected
@@ -77,7 +78,7 @@ def test_missing_key_partial() -> None:
         },
     }
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "before, , after"
 
     assert result == expected
@@ -86,7 +87,7 @@ def test_missing_key_partial() -> None:
 def test_listed_data() -> None:
     args = {"template": "{{# . }}({{ . }}){{/ . }}", "data": [1, 2, 3, 4, 5]}
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "(1)(2)(3)(4)(5)"
 
     assert result == expected
@@ -98,7 +99,7 @@ def test_recursion() -> None:
         "data": {"1": {"2": [{"data": ["1", "2", "3"]}]}},
     }
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "123"
 
     assert result == expected
@@ -107,7 +108,7 @@ def test_recursion() -> None:
 def test_unicode_inside_list() -> None:
     args = {"template": "{{#list}}{{.}}{{/list}}", "data": {"list": ["☠"]}}
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "☠"
 
     assert result == expected
@@ -121,7 +122,7 @@ def test_falsy() -> None:
         "data": {"null": None, "false": False, "list": [], "dict": {}, "zero": 0},
     }
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = R"False[]{}0"
 
     assert result == expected
@@ -151,7 +152,7 @@ def test_inverted_coercion() -> None:
         "data": {"object": ["foo", "bar", {"child": True}, "baz"]},
     }
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "foobarbaz"
 
     assert result == expected
@@ -163,7 +164,7 @@ def test_closing_tag_only() -> None:
     args = {"template": "{{ foo } bar", "data": {"foo": "xx"}}
 
     # with pytest.raises(Chevron2Error):
-    res = render_from_template(**args)
+    res = render_from_template(**args)  # type: ignore
     expected = "{{ foo } bar"
 
     assert res == expected
@@ -174,7 +175,7 @@ def test_current_line_rest() -> None:
     # https://github.com/noahmorrison/chevron/blob/main/test_spec.py#L233
     args = {"template": "first line\nsecond line\n {{ foo } bar", "data": {"foo": "xx"}}
 
-    res = render_from_template(**args)
+    res = render_from_template(**args)  # type: ignore
     expected = "first line\nsecond line\n {{ foo } bar"
 
     assert res == expected
@@ -187,7 +188,7 @@ def test_no_opening_tag() -> None:
     }
 
     with pytest.raises(StrayClosingTagError):
-        render_from_template(**args)
+        render_from_template(**args)  # type: ignore
 
 
 # https://github.com/noahmorrison/chevron/issues/17
@@ -296,7 +297,7 @@ def test_no_opening_tag() -> None:
 def test_nest_loops_with_same_key() -> None:
     args = {"template": "A{{#x}}B{{#x}}{{.}}{{/x}}C{{/x}}D", "data": {"x": ["z", "x"]}}
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "ABzxCBzxCD"
 
     assert result == expected
@@ -308,7 +309,7 @@ def test_nest_loops_with_same_key() -> None:
 def test_partial_indentation() -> None:
     args = {"template": "\t{{> count }}", "partials": {"count": "\tone\n\ttwo"}}
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "\t\tone\n\t\ttwo"
 
     assert result == expected
@@ -325,7 +326,7 @@ def test_indexed() -> None:
         },
     }
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "count 5, 4, , "
 
     assert result == expected
@@ -356,7 +357,7 @@ def test_namedtuple_data() -> None:
     NT = collections.namedtuple("NT", ["foo", "bar"])
     args = {"template": "{{foo}} {{bar}}", "data": NT("hello", "world")}
 
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "hello world"
 
     assert result == expected
@@ -371,7 +372,7 @@ def test_get_key_not_in_dunder_dict_returns_attribute() -> None:
     assert "foo" not in instance.__dict__
 
     args = {"template": "{{foo}}", "data": instance}
-    result = render_from_template(**args)
+    result = render_from_template(**args)  # type: ignore
     expected = "bar"
 
     assert result == expected
@@ -437,7 +438,7 @@ def test_get_key_not_in_dunder_dict_returns_attribute() -> None:
 # https://github.com/sakhezech/combustache/blob/main/tests/custom/test_bad_template.py
 def test_left_delimiter_eof() -> None:
     template = "{{"
-    data = {}
+    data: t.Dict = {}
 
     assert template == render_from_template(template, data)
 
@@ -445,7 +446,7 @@ def test_left_delimiter_eof() -> None:
 def test_no_content_tag() -> None:
     # NOTE output differs from original test case.
     template = "{{}}"
-    data = {"": "stuff"}
+    data: t.Dict = {"": "stuff"}
 
     assert "stuff" == render_from_template(template, data)
 
@@ -453,7 +454,7 @@ def test_no_content_tag() -> None:
 @pytest.mark.xfail
 def test_bad_delimiter() -> None:
     template = "{{= a a a =}}"
-    data = {}
+    data: t.Dict = {}
 
     with pytest.raises(DelimiterError):
         render_from_template(template, data)
@@ -462,7 +463,7 @@ def test_bad_delimiter() -> None:
 @pytest.mark.xfail
 def test_section_not_closed() -> None:
     template = "{{#section}} hello"
-    data = {}
+    data: t.Dict = {}
 
     with pytest.raises(MissingClosingTagError):
         render_from_template(template, data)
@@ -470,7 +471,7 @@ def test_section_not_closed() -> None:
 
 def test_stray_closing_tag() -> None:
     template = "{{/closing}} hello"
-    data = {}
+    data: t.Dict = {}
 
     with pytest.raises(StrayClosingTagError):
         render_from_template(template, data)
@@ -481,7 +482,7 @@ def test_stray_closing_tag() -> None:
 
 
 @pytest.mark.xfail
-def test_stringify() -> None:
+def test_stringify():
     template = "This statement is {{bool}}."
     data = {"bool": True}
     expected = "This statement is true."
@@ -500,7 +501,7 @@ def test_stringify() -> None:
 # See also:
 # https://github.com/noahmorrison/chevron/issues/125
 @pytest.mark.xfail
-def test_escape() -> None:
+def test_escape():
     template = "I am escaping quotes: {{quotes}}"
     data = {"quotes": "\" \" ' '"}
     expected = r"I am escaping quotes: \" \" \' \'"
@@ -515,7 +516,7 @@ def test_escape() -> None:
 # TODO give a default option that is to emit a warning, or do whatever chevron does
 # https://github.com/noahmorrison/chevron/blob/main/chevron/renderer.py#L95
 @pytest.mark.xfail
-def test_missing_data() -> None:
+def test_missing_data():
     template = "Location: {{location}}."
     data = {}
     expected = "Location: UNKNOWN."
@@ -553,7 +554,7 @@ def test_missing_partial():
 
 
 @pytest.mark.xfail
-def test_missing_section() -> None:
+def test_missing_section():
     template = "List of your repos:{{#repos}}\n[{{name}}](url) - {{desc}}{{/repos}}"
     data = {"repos": []}
     expected = "List of your repos:"

@@ -10,7 +10,7 @@ from collections import deque
 import typing_extensions as te
 
 from .exceptions import MissingClosingTagError, StrayClosingTagError
-from .tokenize_new import TokenType, mustache_tokenizer
+from .tokenize_new import TokenTuple, TokenType, mustache_tokenizer
 
 # from .tokenize import tokenize
 from .util import html_escape
@@ -120,10 +120,8 @@ class TagType(enum.Enum):
 
     ROOT = -1
     LITERAL = 0
-    COMMENT = 1
     SECTION = 2
     INVERTED_SECTION = 3
-    END_SECTION = 4
     PARTIAL = 5
     VARIABLE = 6
     VARIABLE_RAW = 7
@@ -282,8 +280,8 @@ def handle_final_line_clear(
 
 
 def process_raw_token_list(
-    raw_token_list: t.List[t.Tuple[TokenType, str]],
-) -> t.List[t.Tuple[TokenType, str]]:
+    raw_token_list: t.List[TokenTuple],
+) -> t.List[TokenTuple]:
     # TODO I think this function can be simplified with a mark and remove algorithm,
     # avoids edge cases related to going through on a single pass.
 
@@ -296,7 +294,7 @@ def process_raw_token_list(
     )
 
     indices_to_delete: t.Set[int] = set()
-    res_token_list: t.List[t.Tuple[TokenType, str]] = []
+    res_token_list: t.List[TokenTuple] = []
     # TODO do token whitespace processing and partial replacement here.
     for i, token in enumerate(raw_token_list):
         token_type, token_data = token
@@ -445,7 +443,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             raise Exception
 
     if work_stack[-1].tag_type is not TagType.ROOT:
-        raise MissingClosingTagError("Missing closing tag for {work_stack[-1].data}")
+        raise MissingClosingTagError(f"Missing closing tag for {work_stack[-1].data}")
 
     return root
 

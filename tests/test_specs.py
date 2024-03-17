@@ -30,7 +30,12 @@ def test_spec_from_folder(datadir: Path) -> None:
 
     any_fail = False
     for test_path in datadir.iterdir():
-        if test_path.name in ("delimiters.json",) or test_path.name.startswith("~"):
+        if test_path.name in (
+            "delimiters.json",
+            "~dynamic-names.json",
+            "~inheritance.json",
+            "~lambdas.json",
+        ):
             continue
 
         with test_path.open() as test_file:

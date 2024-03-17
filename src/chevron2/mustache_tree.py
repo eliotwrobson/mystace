@@ -150,8 +150,9 @@ class MustacheTreeNode:
     def recursive_display(self) -> str:
         res_str = self.__repr__() + "\n"
 
-        for child in self.children:
-            res_str += "    " + child.recursive_display() + "\n"
+        if self.children is not None:
+            for child in self.children:
+                res_str += "    " + child.recursive_display() + "\n"
 
         return res_str
 
@@ -193,6 +194,8 @@ class MustacheRenderer:
         res_list = []
         starting_context = ContextNode(data)
 
+        assert self.mustache_tree.children is not None
+
         # Never need to read the root because it has no data
         work_deque: t.Deque[t.Tuple[MustacheTreeNode, ContextNode]] = deque(
             (node, starting_context) for node in self.mustache_tree.children
@@ -221,6 +224,8 @@ class MustacheRenderer:
             elif curr_node.tag_type is TagType.SECTION:
                 new_context_stacks = curr_context.open_section(curr_node.data)
 
+                assert curr_node.children is not None
+
                 for new_context_stack in reversed(new_context_stacks):
                     for child_node in reversed(curr_node.children):
                         # No need to make a copy of the context per-child, it's immutable
@@ -231,6 +236,8 @@ class MustacheRenderer:
                 # by definition aren't in the namespace and can't add anything.
                 lookup_data = curr_context.get(curr_node.data)
 
+                assert curr_node.children is not None
+
                 if not bool(lookup_data):
                     for child_node in reversed(curr_node.children):
                         work_deque.appendleft((child_node, curr_context))
@@ -240,6 +247,8 @@ class MustacheRenderer:
 
                 if partial_tree is None:
                     continue
+
+                assert partial_tree.children is not None
 
                 for child_node in reversed(partial_tree.children):
                     work_deque.appendleft((child_node, curr_context))

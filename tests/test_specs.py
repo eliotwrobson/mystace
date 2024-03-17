@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """
 Testing against the official mustache specs. From:
 https://github.com/mustache/spec

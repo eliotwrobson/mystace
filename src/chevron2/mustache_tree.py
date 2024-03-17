@@ -306,6 +306,7 @@ def process_raw_token_list(raw_token_list: t.List) -> t.List:
         TokenType.END_SECTION,
         TokenType.INVERTED_SECTION,
         TokenType.SECTION,
+        TokenType.PARTIAL,
     )
 
     indices_to_delete = set()

@@ -9,7 +9,7 @@ from collections import deque
 
 import typing_extensions as te
 
-from .exceptions import StrayClosingTagError
+from .exceptions import MissingClosingTagError, StrayClosingTagError
 from .tokenize_new import TokenType, mustache_tokenizer
 
 # from .tokenize import tokenize
@@ -444,6 +444,9 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             # assert_never(token_type)
             raise Exception
 
+    if work_stack[-1].tag_type is not TagType.ROOT:
+        raise MissingClosingTagError("Missing closing tag for {work_stack[-1].data}")
+
     return root
 
 
@@ -452,7 +455,4 @@ def render_from_template(
     data: ContextObjT = None,
     partials: t.Optional[t.Dict[str, str]] = None,
 ) -> str:
-    # if partials_dic is not None:
-    #    return ""
-
     return MustacheRenderer.from_template(template, partials).render(data)

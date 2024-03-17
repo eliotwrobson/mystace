@@ -159,6 +159,7 @@ files = [
 
 [package.dependencies]
 python-dateutil = ">=2.4"
+typing-extensions = {version = ">=3.10.0.1", markers = "python_version <= \"3.8\""}
 
 [[package]]
 name = "flameprof"
@@ -552,5 +553,5 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.9,<4.0"
-content-hash = "95d2d02f6b1b0c3121bc2cce261907ec8e33e908a6d88c5a6f0649cd236c2051"
+python-versions = ">=3.8,<4.0"
+content-hash = "8cc9f5482ba5dfcde8a0bf0e6a0dbf54361d1756a6236880b37d82d076d507ed"

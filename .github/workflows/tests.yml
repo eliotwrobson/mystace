@@ -12,7 +12,7 @@ jobs:
       matrix:
         # TODO support more versions
         python-version: ["3.12", "3.11", "3.10"]
-        poetry-version: ["1.7.1"]
+        poetry-version: ["1.8.1"]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -39,5 +39,3 @@ jobs:
       # TODO figure out best way to display coverage
       #- name: Comment coverage
       #  uses: coroo/pytest-coverage-commentator@v1.0.2
-      - name: Coverage Badge
-        uses: tj-actions/coverage-badge-py@v2

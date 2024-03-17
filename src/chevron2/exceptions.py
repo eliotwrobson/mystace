@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
 class Chevron2Error(Exception):
     """
     Chevron2 base exception. Not raised.

@@ -42,7 +42,7 @@ class TokenType(Enum):
 class Token(t.NamedTuple):
     loc: int
     type: TokenType
-    next_match: re.Match[str]
+    next_match: re.Match
     pattern: re.Pattern
 
 

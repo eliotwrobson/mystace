@@ -22,7 +22,13 @@ from faker import Faker
 from typing_extensions import assert_never
 
 RenderFunctionT = t.Literal[
-    "chevron2", "chevron", "combustache", "moosetash", "pystache", "ustache"
+    "chevron2",
+    "chevron",
+    "combustache",
+    "moosetash",
+    "pystache",
+    "ustache",
+    "chevron2-full",
 ]
 TestCaseT = t.Tuple[str, t.Dict[str, int]]
 TestCaseGeneratorT = t.Callable[[int], TestCaseT]
@@ -315,6 +321,8 @@ def test_large(
 
         def render_function(_, obj):
             return renderer.render(obj)
+    elif render_function_name == "chevron2-full":
+        render_function = chevron2.render_from_template
     elif render_function_name == "chevron":
         render_function = chevron.render
     elif render_function_name == "combustache":

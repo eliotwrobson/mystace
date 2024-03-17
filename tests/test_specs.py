@@ -3,6 +3,9 @@
 """
 Testing against the official mustache specs. From:
 https://github.com/mustache/spec
+
+Version copied here is v1.4.1:
+https://github.com/mustache/spec/releases/tag/v1.4.1
 """
 
 import json

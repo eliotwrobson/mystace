@@ -13,6 +13,15 @@ class Chevron2Error(Exception):
     pass
 
 
+class NodeHasNoChildren(Chevron2Error):
+    """
+    Tried to access children of a MustacheTreeNode type that does not
+    have any.
+    """
+
+    pass
+
+
 class DelimiterError(Chevron2Error):
     """
     A delimiter tag contents are wrong.

@@ -317,7 +317,6 @@ def test_partial_indentation() -> None:
 
 # https://github.com/noahmorrison/chevron/issues/52
 # TODO implement this and feed in lambdas test cases.
-@pytest.mark.xfail
 def test_indexed() -> None:
     args = {
         "template": "count {{count.0}}, {{count.1}}, " "{{count.100}}, {{nope.0}}",

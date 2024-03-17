@@ -63,7 +63,14 @@ class ContextNode:
 
         # Loop through the rest
         for key in chain_iter:
-            if isinstance(outer_context, dict) and key in outer_context:
+            if isinstance(outer_context, list):
+                try:
+                    int_key = int(key)
+                    outer_context = outer_context[int_key]
+                except Exception:
+                    return None
+
+            elif isinstance(outer_context, dict) and key in outer_context:
                 outer_context = outer_context[key]
             else:
                 return None
@@ -92,36 +99,6 @@ class ContextNode:
         new_stack = ContextNode(new_context, self)
         return [new_stack]
 
-
-### TODO delete this function once we copy the functionality into the
-### new getter logic
-def deep_get(item: t.Any, key: str) -> t.Any:
-    try:
-        item = item()
-    except TypeError:
-        pass
-
-    try:
-        try:
-            return item[key]
-        except KeyError:
-            return None
-    except TypeError:
-        pass
-
-    try:
-        idx = int(key)
-        try:
-            return item[idx]
-        except IndexError:
-            return None
-    except ValueError:
-        pass
-
-    return getattr(item, key, None)
-
-
-### TODO probably need to refactor the above
 
 # '!': 'comment',
 # '#': 'section',

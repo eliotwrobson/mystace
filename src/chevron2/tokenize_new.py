@@ -56,19 +56,23 @@ class TokenCursor:
     text: str
     _remainder: t.Optional[t.Tuple[TokenType, str]]
 
-    def __init__(self, text: str, right_delim: str, left_delim: str) -> None:
+    def __init__(self, text: str, left_delim: str, right_delim: str) -> None:
+        left_delim = re.escape(left_delim)
+        right_delim = re.escape(right_delim)
+        print(right_delim)
+
         # Using inline flags for more control over behavior, see
         # https://docs.python.org/3/library/re.html#re.DOTALL
         patterns = [
-            (TokenType.COMMENT, r"(?s)\{\{!(.*?)\}\}"),
-            (TokenType.RAW_VARIABLE, r"\{\{\{(.*?)\}\}\}"),
-            (TokenType.RAW_VARIABLE, r"\{\{&(.*?)\}\}"),
-            (TokenType.SECTION, r"\{\{#(.*?)\}\}"),
-            (TokenType.INVERTED_SECTION, r"\{\{\^(.*?)\}\}"),
-            (TokenType.END_SECTION, r"\{\{/(.*?)\}\}"),
-            (TokenType.DELIMITER, r"\{\{=(.*?)=\}\}"),
-            (TokenType.PARTIAL, r"\{\{>(.*?)\}\}"),
-            (TokenType.VARIABLE, r"\{\{(.*?)\}\}"),
+            (TokenType.COMMENT, r"(?s)" + left_delim + r"\!(.*?)" + right_delim),
+            (TokenType.RAW_VARIABLE, left_delim + r"\{(.*?)\}" + right_delim),
+            (TokenType.RAW_VARIABLE, left_delim + r"\&(.*?)" + right_delim),
+            (TokenType.SECTION, left_delim + r"\#(.*?)" + right_delim),
+            (TokenType.INVERTED_SECTION, left_delim + r"\^(.*?)" + right_delim),
+            (TokenType.END_SECTION, left_delim + r"/(.*?)" + right_delim),
+            (TokenType.DELIMITER, left_delim + r"=(.*?)=" + right_delim),
+            (TokenType.PARTIAL, left_delim + r">(.*?)" + right_delim),
+            (TokenType.VARIABLE, left_delim + r"(.*?)" + right_delim),
         ]
 
         token_heap = []
@@ -80,7 +84,6 @@ class TokenCursor:
             if match is None:
                 continue
 
-            # print(pattern, match.start())
             token_heap.append(Token(match.start(), token_type, match, pattern))
 
         heapq.heapify(token_heap)
@@ -166,7 +169,7 @@ class TokenCursor:
 
 def mustache_tokenizer(text: str) -> t.List[t.Tuple[TokenType, str]]:
     # Different tokenizers to deal with the stupid delimiter swaps
-    first_cursor = TokenCursor(text, r"\{\{", r"\}\}")
+    first_cursor = TokenCursor(text, R"{{", R"}}")
     res_token_list = []
     tokenizer_stack = [first_cursor]
     # test_thing = []

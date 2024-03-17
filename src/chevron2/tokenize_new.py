@@ -133,6 +133,9 @@ class TokenCursor:
             # the next tag event.
             # NOTE I think the edge case here is if the newline is
             # at the location of the current cursor.
+            # TODO use a method call to do this and cache the location based on the cursor,
+            # or just read all newline locations from the beginning. I'm pretty sure this is
+            # what's causing the slowdown in some test cases.
             newline_idx = self.text.find("\n", self.cursor_loc)
             # newline_idx = self.text.rfind("\n", self.cursor_loc, next_event_loc - 1)
 

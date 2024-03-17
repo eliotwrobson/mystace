@@ -25,12 +25,14 @@ RenderFunctionT = t.Literal[
     "moosetash",
     "pystache",
     "ustache",
+    "ustache-full",
     "chevron2-full",
 ]
 TestCaseT = t.Tuple[str, t.Dict[str, int]]
 TestCaseGeneratorT = t.Callable[[int], TestCaseT]
 
 
+# TODO run these generated cases through a test fixture.
 def generate_test_case_long(n: int) -> TestCaseT:
     names = {f"thing{i}": i for i in range(n)}
     template = "".join(r"{{" + name + "}}" for name in names.keys())
@@ -309,7 +311,7 @@ def test_large(
     request: t.Any,
 ) -> None:
     # TODO turn up the test case size later.
-    n = 100
+    n = 1_000
 
     template, names = test_case_generator(n)  # type: ignore
 
@@ -338,6 +340,11 @@ def test_large(
         import pystache
 
         render_function = pystache.render
+    elif render_function_name == "ustache-full":
+        import ustache
+
+        def render_function(x, y):
+            return ustache.render(x, y, cache={})
     elif render_function_name == "ustache":
         import ustache
 

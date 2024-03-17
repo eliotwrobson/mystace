@@ -459,7 +459,6 @@ def test_bad_delimiter() -> None:
         render_from_template(template, data)
 
 
-@pytest.mark.xfail
 def test_section_not_closed() -> None:
     template = "{{#section}} hello"
     data: t.Dict = {}

@@ -6,6 +6,7 @@ from collections import deque
 
 import typing_extensions as te
 
+from .exceptions import StrayClosingTagError
 from .tokenize_new import TokenType, mustache_tokenizer
 
 # from .tokenize import tokenize
@@ -198,9 +199,9 @@ class MustacheRenderer:
         else:
             self.partials_dict = {}
 
-    def render(self, context: ContextObjT) -> str:
+    def render(self, data: ContextObjT) -> str:
         res_list = []
-        starting_context = ContextNode(context)
+        starting_context = ContextNode(data)
 
         # Never need to read the root because it has no data
         work_deque: t.Deque[t.Tuple[MustacheTreeNode, ContextNode]] = deque(
@@ -259,14 +260,14 @@ class MustacheRenderer:
     def from_template(
         cls: te.Self,
         template_str: str,
-        partials_dict: t.Optional[t.Dict[str, str]] = None,
+        partials: t.Optional[t.Dict[str, str]] = None,
     ) -> te.Self:
         partials_tree_dict = None
 
-        if partials_dict is not None:
+        if partials is not None:
             partials_tree_dict = {
                 key: create_mustache_tree(partial_data)
-                for key, partial_data in partials_dict.items()
+                for key, partial_data in partials.items()
             }
 
         template_tree = create_mustache_tree(template_str)
@@ -432,7 +433,9 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             work_stack.append(section_node)
 
         elif token_type is TokenType.END_SECTION:
-            assert work_stack[-1].data == token_data
+            if work_stack[-1].data != token_data:
+                raise StrayClosingTagError(f'Opening tag for "{token_data}" not found.')
+
             # Close the current section by popping off the end of the work stack.
             work_stack.pop()
 
@@ -460,9 +463,10 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
 
 def render_from_template(
     template: str,
-    context: ContextObjT,
-    partials_dict: t.Optional[t.Dict[str, str]] = None,
+    data: ContextObjT = None,
+    partials: t.Optional[t.Dict[str, str]] = None,
 ) -> str:
     # if partials_dic is not None:
     #    return ""
-    return MustacheRenderer.from_template(template, partials_dict).render(context)
+
+    return MustacheRenderer.from_template(template, partials).render(data)

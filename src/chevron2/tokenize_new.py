@@ -133,22 +133,33 @@ class TokenCursor:
             # '=': 'set delimiter?',
             # '{': 'no escape?',
             # '&': 'no escape'
-            if new_token_data[0] == "#":
+            # TODO do we want to render the empty string key for the
+            # open brackets? We can probably revert to normal chevron
+            # behavior in this case instead oft supporting this case.
+            if not new_token_data:
+                new_token_type = TokenType.VARIABLE
+            elif new_token_data[0] == "#":
                 new_token_type = TokenType.SECTION
+                new_token_data = new_token_data[1:]
             elif new_token_data[0] == "^":
                 new_token_type = TokenType.INVERTED_SECTION
+                new_token_data = new_token_data[1:]
             elif new_token_data[0] == "/":
                 new_token_type = TokenType.END_SECTION
+                new_token_data = new_token_data[1:]
             elif new_token_data[0] == ">":
                 new_token_type = TokenType.PARTIAL
+                new_token_data = new_token_data[1:]
             elif new_token_data[0] == "=":
                 # TODO the delimiter one needs more checks
                 new_token_type = TokenType.DELIMITER
             elif new_token_data[0] in ("{", "&"):
                 # TODO maybe need to strip the inner thing more?
                 new_token_type = TokenType.RAW_VARIABLE
+                if new_token_data[0] == "&":
+                    new_token_data = new_token_data[1:]
             else:
-                # Just a raw variable
+                # Just a variable
                 new_token_type = TokenType.VARIABLE
 
             # Advance token iterator and cursor
@@ -193,12 +204,12 @@ class TokenCursor:
             return TokenTuple(TokenType.LITERAL, first_res_string)
 
         next_cursor_loc = len(self.text)
-
+        # print(next_match, next_comment)
         if next_match is not None:
-            next_cursor_loc = min(next_cursor_loc, next_match.end())
+            next_cursor_loc = min(next_cursor_loc, next_match.start())
 
         if next_comment is not None:
-            next_cursor_loc = min(next_cursor_loc, next_comment.end())
+            next_cursor_loc = min(next_cursor_loc, next_comment.start())
 
         newline_idx = self.text.find("\n", self.cursor_loc)
 

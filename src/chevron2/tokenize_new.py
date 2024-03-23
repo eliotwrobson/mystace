@@ -1,20 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import heapq
 import re
 import typing as t
 from enum import Enum
 
-# '!': 'comment',
-# '#': 'section',
-# '^': 'inverted section',
-# '/': 'end',
-# '>': 'partial',
-# '=': 'set delimiter?',
-# '{': 'no escape?',
-# '&': 'no escape'
-
+from more_itertools import peekable
 
 # Numerical values here will be used to break ties in the heap
 
@@ -71,6 +62,17 @@ class TokenCursor:
         token_pattern = left_delim + r"(.*?)" + right_delim
         raw_token_pattern = left_delim + r"\{(.*?)\}" + right_delim
 
+        full_pattern = token_pattern + "|" + raw_token_pattern
+
+        regex_pattern_comp = re.compile(full_pattern)
+        comment_pattern_comp = re.compile(comment_pattern)
+
+        self.match_iter = peekable(regex_pattern_comp.finditer(text))
+        self.comment_iter = peekable(comment_pattern_comp.finditer(text))
+
+        # regex = re.compile(pattern)
+        # matches = regex.finditer(text)
+
         # Using inline flags for more control over behavior, see
         # https://docs.python.org/3/library/re.html#re.DOTALL
         # patterns = [
@@ -115,8 +117,68 @@ class TokenCursor:
         elif self.cursor_loc == len(self.text):
             return None
 
+        next_match = self.match_iter.peek(None)
+
+        # print(next_match, next_match.start(), next_match.end(), self.cursor_loc)
+        # If we're at the current match
+        if next_match is not None and next_match.start() == self.cursor_loc:
+            # NOTE This uses the fact that each match group has a single unknown.
+            new_token_data = "".join(next_match.group(1).split())
+
+            # '!': 'comment',
+            # '#': 'section',
+            # '^': 'inverted section',
+            # '/': 'end',
+            # '>': 'partial',
+            # '=': 'set delimiter?',
+            # '{': 'no escape?',
+            # '&': 'no escape'
+            if new_token_data[0] == "#":
+                new_token_type = TokenType.SECTION
+            elif new_token_data[0] == "^":
+                new_token_type = TokenType.INVERTED_SECTION
+            elif new_token_data[0] == "/":
+                new_token_type = TokenType.END_SECTION
+            elif new_token_data[0] == ">":
+                new_token_type = TokenType.PARTIAL
+            elif new_token_data[0] == "=":
+                # TODO the delimiter one needs more checks
+                new_token_type = TokenType.DELIMITER
+            elif new_token_data[0] in ("{", "&"):
+                # TODO maybe need to strip the inner thing more?
+                new_token_type = TokenType.RAW_VARIABLE
+            else:
+                # Just a raw variable
+                new_token_type = TokenType.VARIABLE
+
+            # Advance token iterator and cursor
+            next(self.match_iter)
+            self.cursor_loc = next_match.end()
+            # print("setting")
+            # print(next_match)
+            # assert False
+
+            return TokenTuple(new_token_type, new_token_data)
+
+        next_comment = self.comment_iter.peek(None)
+
+        # If we're at the current match
+        if next_comment is not None and next_comment.start() == self.cursor_loc:
+            # NOTE This uses the fact that each match group has a single unknown.
+            # new_token_data = "".join(next_comment.group(1).split())
+
+            # '!': 'comment'
+            # Advance token iterator and cursor
+            next(self.match_iter)
+            self.cursor_loc = next_comment.end()
+
+            # No need to include contents of the comment,
+            # just keep track of where it started and ended.
+            TokenTuple(new_token_type, "")
+
+        # If neither match worked, then we have a literal.
         # If no more tokens, return the final literal
-        elif not self.token_heap:
+        if next_match is None and next_comment is None:
             newline_loc = self.text.find("\n", self.cursor_loc)
 
             if newline_loc == -1 or newline_loc == len(self.text) - 1:
@@ -130,48 +192,84 @@ class TokenCursor:
 
             return TokenTuple(TokenType.LITERAL, first_res_string)
 
-        elif self.token_heap[0].loc > self.cursor_loc:
-            next_event_loc = self.token_heap[0].loc
+        next_cursor_loc = len(self.text)
 
-            # TODO to speed this up, use rfind to get the last location before
-            # the next tag event.
-            # NOTE I think the edge case here is if the newline is
-            # at the location of the current cursor.
-            # TODO use a method call to do this and cache the location based on the cursor,
-            # or just read all newline locations from the beginning. I'm pretty sure this is
-            # what's causing the slowdown in some test cases.
-            newline_idx = self.text.find("\n", self.cursor_loc)
-            # newline_idx = self.text.rfind("\n", self.cursor_loc, next_event_loc - 1)
+        if next_match is not None:
+            next_cursor_loc = min(next_cursor_loc, next_match.end())
 
-            # assert newline_idx == self.text.rfind("\n", self.cursor_loc, next_event_loc)
-            if newline_idx >= 0:
-                next_event_loc = min(newline_idx + 1, next_event_loc)
+        if next_comment is not None:
+            next_cursor_loc = min(next_cursor_loc, next_comment.end())
 
-            literal_string = self.text[self.cursor_loc : next_event_loc]
+        newline_idx = self.text.find("\n", self.cursor_loc)
 
-            self.cursor_loc = next_event_loc
-            return TokenTuple(TokenType.LITERAL, literal_string)
+        # TODO maybe can use rfind to put literals together more efficiently.
+        # assert newline_idx == self.text.rfind("\n", self.cursor_loc, next_event_loc)
+        if newline_idx >= 0:
+            next_cursor_loc = min(newline_idx + 1, next_cursor_loc)
 
-        new_token_type = self.token_heap[0].type
-        # NOTE This uses the fact that each match group has a single unknown.
-        new_token_data = self.token_heap[0].next_match.group(1).strip()
+        literal_string = self.text[self.cursor_loc : next_cursor_loc]
 
-        next_event_loc = self.token_heap[0].next_match.end()
-        # Remove all stale tokens, update them by searching ahead of the location of the current cursor
-        while self.token_heap and self.token_heap[0].loc < next_event_loc:
-            start_loc, token_type, match_obj, pattern = heapq.heappop(self.token_heap)
-            next_match = pattern.search(self.text, next_event_loc)
+        self.cursor_loc = next_cursor_loc
 
-            # If match is none, this pattern doesn't appear in the text anymore, so we
-            # can just throw away.
-            if next_match is not None:
-                heapq.heappush(
-                    self.token_heap,
-                    HeapToken(next_match.start(), token_type, next_match, pattern),
-                )
+        return TokenTuple(TokenType.LITERAL, literal_string)
 
-        self.cursor_loc = next_event_loc
-        return TokenTuple(new_token_type, new_token_data)
+        # # If no more tokens, return the final literal
+        # elif not self.token_heap:
+        #     newline_loc = self.text.find("\n", self.cursor_loc)
+
+        #     if newline_loc == -1 or newline_loc == len(self.text) - 1:
+        #         res_string = self.text[self.cursor_loc : len(self.text)]
+        #         self.cursor_loc = len(self.text)
+        #         return TokenTuple(TokenType.LITERAL, res_string)
+
+        #     first_res_string = self.text[self.cursor_loc : newline_loc + 1]
+        #     second_res_string = self.text[newline_loc + 1 : len(self.text)]
+        #     self._remainder = TokenTuple(TokenType.LITERAL, second_res_string)
+
+        #     return TokenTuple(TokenType.LITERAL, first_res_string)
+
+        # elif self.token_heap[0].loc > self.cursor_loc:
+        #     next_cursor_loc = self.token_heap[0].loc
+
+        #     # TODO to speed this up, use rfind to get the last location before
+        #     # the next tag event.
+        #     # NOTE I think the edge case here is if the newline is
+        #     # at the location of the current cursor.
+        #     # TODO use a method call to do this and cache the location based on the cursor,
+        #     # or just read all newline locations from the beginning. I'm pretty sure this is
+        #     # what's causing the slowdown in some test cases.
+        #     newline_idx = self.text.find("\n", self.cursor_loc)
+        #     # newline_idx = self.text.rfind("\n", self.cursor_loc, next_event_loc - 1)
+
+        #     # assert newline_idx == self.text.rfind("\n", self.cursor_loc, next_event_loc)
+        #     if newline_idx >= 0:
+        #         next_cursor_loc = min(newline_idx + 1, next_cursor_loc)
+
+        #     literal_string = self.text[self.cursor_loc : next_cursor_loc]
+
+        #     self.cursor_loc = next_cursor_loc
+        #     return TokenTuple(TokenType.LITERAL, literal_string)
+
+        # new_token_type = self.token_heap[0].type
+        # # NOTE This uses the fact that each match group has a single unknown.
+        # new_token_data = self.token_heap[0].next_match.group(1).strip()
+
+        # next_cursor_loc = self.token_heap[0].next_match.end()
+        # # Remove all stale tokens, update them by searching ahead of the location of the current cursor
+        # while self.token_heap and self.token_heap[0].loc < next_cursor_loc:
+        #     start_loc, token_type, match_obj, pattern = heapq.heappop(self.token_heap)
+        #     next_match = pattern.search(self.text, next_cursor_loc)
+
+        #     # If match is none, this pattern doesn't appear in the text anymore, so we
+        #     # can just throw away.
+        #     if next_match is not None:
+        #         heapq.heappush(
+        #             self.token_heap,
+        #             HeapToken(next_match.start(), token_type, next_match, pattern),
+        #         )
+
+        # self.cursor_loc = next_cursor_loc
+        # return TokenTuple(new_token_type, new_token_data)
 
 
 def mustache_tokenizer(text: str) -> t.List[TokenTuple]:
@@ -179,13 +277,19 @@ def mustache_tokenizer(text: str) -> t.List[TokenTuple]:
     first_cursor = TokenCursor(text, R"{{", R"}}")
     res_token_list = []
     tokenizer_stack = [first_cursor]
-
+    i = 0
+    print("text: ", text)
     while tokenizer_stack:
         curr_tokenizer = tokenizer_stack.pop()
 
         curr_token = curr_tokenizer.get_next_token()
 
         while curr_token is not None:
+            i += 1
+
+            if i > 100:
+                print(res_token_list)
+                assert False
             # token_type, data = curr_token
 
             if curr_token.type is TokenType.DELIMITER:
@@ -198,4 +302,5 @@ def mustache_tokenizer(text: str) -> t.List[TokenTuple]:
     # Ensures tokenization worked as expected
     # NOTE must change match group data to get this to pass
     # assert text == "".join(test_thing)
+    print(res_token_list)
     return res_token_list

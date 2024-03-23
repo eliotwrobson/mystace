@@ -32,7 +32,22 @@ jobs:
         run: poetry install --with dev
 
       - name: Run pytest
-        run: poetry run pytest --cache-clear --cov
+        run: poetry run pytest --cache-clear --cov --benchmark-json output.json
+
+      - name: Download previous benchmark data
+        uses: actions/cache@v4
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'pytest'
+          output-file-path: output.json
+          external-data-json-path: ./cache/output.json
+          # Workflow will fail when an alert happens
+          fail-on-alert: true
           #|
             #set -o pipefail
             # | tee pytest-coverage.txt

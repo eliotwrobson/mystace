@@ -67,34 +67,38 @@ class TokenCursor:
         left_delim = re.escape(left_delim)
         right_delim = re.escape(right_delim)
 
+        comment_pattern = r"(?s)" + left_delim + r"\!(.*?)" + right_delim
+        token_pattern = left_delim + r"(.*?)" + right_delim
+        raw_token_pattern = left_delim + r"\{(.*?)\}" + right_delim
+
         # Using inline flags for more control over behavior, see
         # https://docs.python.org/3/library/re.html#re.DOTALL
-        patterns = [
-            (TokenType.COMMENT, r"(?s)" + left_delim + r"\!(.*?)" + right_delim),
-            (TokenType.RAW_VARIABLE, left_delim + r"\{(.*?)\}" + right_delim),
-            (TokenType.RAW_VARIABLE, left_delim + r"\&(.*?)" + right_delim),
-            (TokenType.SECTION, left_delim + r"\#(.*?)" + right_delim),
-            (TokenType.INVERTED_SECTION, left_delim + r"\^(.*?)" + right_delim),
-            (TokenType.END_SECTION, left_delim + r"/(.*?)" + right_delim),
-            (TokenType.DELIMITER, left_delim + r"=(.*?)=" + right_delim),
-            (TokenType.PARTIAL, left_delim + r">(.*?)" + right_delim),
-            (TokenType.VARIABLE, left_delim + r"(.*?)" + right_delim),
-        ]
+        # patterns = [
+        #     (TokenType.COMMENT, r"(?s)" + left_delim + r"\!(.*?)" + right_delim),
+        #     (TokenType.RAW_VARIABLE, left_delim + r"\{(.*?)\}" + right_delim),
+        #     (TokenType.RAW_VARIABLE, left_delim + r"\&(.*?)" + right_delim),
+        #     (TokenType.SECTION, left_delim + r"\#(.*?)" + right_delim),
+        #     (TokenType.INVERTED_SECTION, left_delim + r"\^(.*?)" + right_delim),
+        #     (TokenType.END_SECTION, left_delim + r"/(.*?)" + right_delim),
+        #     (TokenType.DELIMITER, left_delim + r"=(.*?)=" + right_delim),
+        #     (TokenType.PARTIAL, left_delim + r">(.*?)" + right_delim),
+        #     (TokenType.VARIABLE, left_delim + r"(.*?)" + right_delim),
+        # ]
 
-        token_heap = []
+        # token_heap = []
 
-        for token_type, pattern_str in patterns:
-            pattern = re.compile(pattern_str)
-            match = pattern.search(text)
+        # for token_type, pattern_str in patterns:
+        #     pattern = re.compile(pattern_str)
+        #     match = pattern.search(text)
 
-            if match is None:
-                continue
+        #     if match is None:
+        #         continue
 
-            token_heap.append(HeapToken(match.start(), token_type, match, pattern))
+        #     token_heap.append(HeapToken(match.start(), token_type, match, pattern))
 
-        heapq.heapify(token_heap)
+        # heapq.heapify(token_heap)
 
-        self.token_heap = token_heap
+        # self.token_heap = token_heap
         self.cursor_loc = 0
         self.text = text
         self._remainder = None

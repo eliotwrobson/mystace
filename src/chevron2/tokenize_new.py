@@ -180,12 +180,12 @@ class TokenCursor:
 
             # '!': 'comment'
             # Advance token iterator and cursor
-            next(self.match_iter)
+            next(self.comment_iter)
             self.cursor_loc = next_comment.end()
 
             # No need to include contents of the comment,
             # just keep track of where it started and ended.
-            TokenTuple(new_token_type, "")
+            TokenTuple(TokenType.COMMENT, "")
 
         # If neither match worked, then we have a literal.
         # If no more tokens, return the final literal
@@ -289,18 +289,18 @@ def mustache_tokenizer(text: str) -> t.List[TokenTuple]:
     res_token_list = []
     tokenizer_stack = [first_cursor]
     i = 0
-    print("text: ", text)
+    # print("text: ", text)
     while tokenizer_stack:
         curr_tokenizer = tokenizer_stack.pop()
 
         curr_token = curr_tokenizer.get_next_token()
 
         while curr_token is not None:
-            i += 1
+            # i += 1
 
-            if i > 100:
-                print(res_token_list)
-                assert False
+            # if i > 100:
+            #     print(res_token_list)
+            #     assert False
             # token_type, data = curr_token
 
             if curr_token.type is TokenType.DELIMITER:
@@ -313,5 +313,5 @@ def mustache_tokenizer(text: str) -> t.List[TokenTuple]:
     # Ensures tokenization worked as expected
     # NOTE must change match group data to get this to pass
     # assert text == "".join(test_thing)
-    print(res_token_list)
+    # print(res_token_list)
     return res_token_list

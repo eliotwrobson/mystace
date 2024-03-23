@@ -20,6 +20,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
+more-itertools = ">=8"
 
 [tool.poetry.group.dev]
 optional = true

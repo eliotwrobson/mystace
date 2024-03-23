@@ -62,13 +62,15 @@ class TokenCursor:
         token_pattern = left_delim + r"(.*?)" + right_delim
         raw_token_pattern = left_delim + r"\{(.*?)\}" + right_delim
 
-        full_pattern = token_pattern + "|" + raw_token_pattern
+        # full_pattern = token_pattern + "|" + raw_token_pattern
 
-        regex_pattern_comp = re.compile(full_pattern)
+        regex_pattern_comp = re.compile(token_pattern)
         comment_pattern_comp = re.compile(comment_pattern)
+        raw_pattern_comp = re.compile(raw_token_pattern)
 
         self.match_iter = peekable(regex_pattern_comp.finditer(text))
         self.comment_iter = peekable(comment_pattern_comp.finditer(text))
+        self.raw_iter = peekable(raw_pattern_comp.finditer(text))
 
         # regex = re.compile(pattern)
         # matches = regex.finditer(text)
@@ -116,6 +118,50 @@ class TokenCursor:
         # If at the end, no more tokens, so just return None
         elif self.cursor_loc == len(self.text):
             return None
+
+        # TODO use a list for this.
+        # Advance iterators if cursor has moved.
+        while self.match_iter and self.match_iter.peek().start() < self.cursor_loc:
+            next(self.match_iter)
+
+        while self.comment_iter and self.comment_iter.peek().start() < self.cursor_loc:
+            next(self.comment_iter)
+
+        while self.raw_iter and self.raw_iter.peek().start() < self.cursor_loc:
+            next(self.raw_iter)
+
+        # NOTE we have to match comments first because the pattern overlaps
+        # with the main one.
+        next_comment = self.comment_iter.peek(None)
+        # print(next_comment, self.cursor_loc)
+        # if next_comment is not None:
+        #    print(next_comment.start())
+        #    print(next_comment.start() == self.cursor_loc)
+        # If we're at the current match
+        if next_comment is not None and next_comment.start() == self.cursor_loc:
+            # NOTE This uses the fact that each match group has a single unknown.
+            # new_token_data = "".join(next_comment.group(1).split())
+
+            # '!': 'comment'
+            # Advance token iterator and cursor
+            next(self.comment_iter)
+            self.cursor_loc = next_comment.end()
+
+            # No need to include contents of the comment,
+            # just keep track of where it started and ended.
+            return TokenTuple(TokenType.COMMENT, "")
+
+        next_raw = self.raw_iter.peek(None)
+        if next_raw is not None and next_raw.start() == self.cursor_loc:
+            # NOTE This uses the fact that each match group has a single unknown.
+            new_token_data = "".join(next_raw.group(1).split())
+
+            next(self.raw_iter)
+            self.cursor_loc = next_raw.end()
+
+            # No need to include contents of the comment,
+            # just keep track of where it started and ended.
+            return TokenTuple(TokenType.RAW_VARIABLE, new_token_data)
 
         next_match = self.match_iter.peek(None)
 
@@ -171,22 +217,6 @@ class TokenCursor:
 
             return TokenTuple(new_token_type, new_token_data)
 
-        next_comment = self.comment_iter.peek(None)
-
-        # If we're at the current match
-        if next_comment is not None and next_comment.start() == self.cursor_loc:
-            # NOTE This uses the fact that each match group has a single unknown.
-            # new_token_data = "".join(next_comment.group(1).split())
-
-            # '!': 'comment'
-            # Advance token iterator and cursor
-            next(self.comment_iter)
-            self.cursor_loc = next_comment.end()
-
-            # No need to include contents of the comment,
-            # just keep track of where it started and ended.
-            TokenTuple(TokenType.COMMENT, "")
-
         # If neither match worked, then we have a literal.
         # If no more tokens, return the final literal
         if next_match is None and next_comment is None:
@@ -209,7 +239,11 @@ class TokenCursor:
             next_cursor_loc = min(next_cursor_loc, next_match.start())
 
         if next_comment is not None:
+            # print(next_comment)
             next_cursor_loc = min(next_cursor_loc, next_comment.start())
+
+        if next_raw is not None:
+            next_cursor_loc = min(next_cursor_loc, next_raw.start())
 
         newline_idx = self.text.find("\n", self.cursor_loc)
 
@@ -221,7 +255,7 @@ class TokenCursor:
         literal_string = self.text[self.cursor_loc : next_cursor_loc]
 
         self.cursor_loc = next_cursor_loc
-
+        print(literal_string, next_cursor_loc)
         return TokenTuple(TokenType.LITERAL, literal_string)
 
         # # If no more tokens, return the final literal
@@ -313,5 +347,5 @@ def mustache_tokenizer(text: str) -> t.List[TokenTuple]:
     # Ensures tokenization worked as expected
     # NOTE must change match group data to get this to pass
     # assert text == "".join(test_thing)
-    # print(res_token_list)
+    print(res_token_list)
     return res_token_list

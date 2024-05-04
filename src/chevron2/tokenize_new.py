@@ -7,6 +7,192 @@ from enum import Enum
 
 from more_itertools import peekable
 
+TOKEN_TYPES = [(True, False, True, False)] * 0x100
+TOKEN_TYPES[0x21] = False, False, False, True  # '!'
+TOKEN_TYPES[0x23] = False, True, True, False  # '#'
+TOKEN_TYPES[0x26] = True, True, True, True  # '&'
+TOKEN_TYPES[0x2F] = False, True, False, False  # '/'
+TOKEN_TYPES[0x3D] = False, False, False, False  # '='
+TOKEN_TYPES[0x3E] = False, False, True, False  # '>'
+TOKEN_TYPES[0x5E] = False, True, True, True  # '^'
+TOKEN_TYPES[0x7B] = True, True, False, True  # '{'
+
+
+def slicestrip(template: bytes, start: int, end: int) -> slice:
+    """
+    Strip slice from whitespace on bytes.
+
+    :param template: bytes where whitespace should be stripped
+    :param start: substring slice start
+    :param end: substring slice end
+    :returns: resulting stripped slice
+
+    """
+    c = template[start:end]
+    return slice(end - len(c.lstrip()), start + len(c.rstrip()))
+
+
+def tokenize(
+    template: bytes,
+    *,
+    tags: t.Tuple[bytes, bytes] = (Rb"{{", Rb"}}"),
+    comments: bool = False,
+):
+    """
+    Generate token tuples from mustache template.
+
+    This generator accepts sending back a token index, which will result on
+    rewinding it back and repeat everything from there.
+
+    :param template: template as utf-8 encoded bytes
+    :param tags: mustache tag tuple (open, close)
+    :param comments: whether yield comment tokens or not (ignore comments)
+    :param cache: mutable mapping for compiled template cache
+    :return: token tuple generator (type, name slice, content slice, option)
+
+    :raises UnclosedTokenException: if token is left unclosed
+    :raises ClosingTokenException: if block closing token does not match
+    :raises DelimiterTokenException: if delimiter token syntax is invalid
+
+    """
+    EMPTY = slice(0)
+    EVERYTHING = slice(None)
+
+    template_find = template.find
+
+    stack = []
+    stack_append = stack.append
+    stack_pop = stack.pop
+    scope_label = EVERYTHING
+    scope_head = 0
+    scope_start = 0
+    scope_index = 0
+
+    empty = EMPTY
+    start_tag, end_tag = tags
+    end_literal = b"}" + end_tag
+    end_switch = b"=" + end_tag
+    start_len = len(start_tag)
+    end_len = len(end_tag)
+
+    # token: CompiledToken
+    token_types = TOKEN_TYPES
+    t = slice
+    import functools
+
+    s = functools.partial(slicestrip, template)
+
+    text_start, text_end = 0, template_find(start_tag)
+    while text_end != -1:
+        if text_start < text_end:  # text
+            token = False, True, False, empty, t(text_start, text_end), -1
+            yield token
+
+        tag_start = text_end + start_len
+        try:
+            print(template[tag_start])
+            a, b, c, d = token_types[template[tag_start]]
+        except IndexError:
+            raise ValueError
+
+        if a:  # variables
+            tag_start += b
+
+            if c:  # variable
+                tag_end = template_find(end_tag, tag_start)
+                text_start = tag_end + end_len
+
+            else:  # triple-keyed variable
+                tag_end = template_find(end_literal, tag_start)
+                text_start = tag_end + end_len + 1
+
+            token = False, True, True, s(tag_start, tag_end), empty, d
+
+        elif b:  # block
+            tag_start += 1
+            tag_end = template_find(end_tag, tag_start)
+            text_start = tag_end + end_len
+
+            if c:  # open
+                stack_append((scope_label, text_end, scope_start, scope_index))
+                scope_label = s(tag_start, tag_end)
+                scope_head = text_end
+                scope_start = text_start
+                scope_index = -1  # len(recording)
+                token = True, True, False, scope_label, empty, d
+
+            elif template[scope_label] != template[tag_start:tag_end].strip():
+                raise ValueError
+
+            else:  # close
+                token = (
+                    True,
+                    True,
+                    True,
+                    scope_label,
+                    s(scope_start, text_end),
+                    scope_index,
+                )
+                scope_label, scope_head, scope_start, scope_index = stack_pop()
+
+        elif c:  # partial
+            tag_start += 1
+            tag_end = template_find(end_tag, tag_start)
+            text_start = tag_end + end_len
+            token = True, False, True, s(tag_start, tag_end), empty, -1
+
+        elif d:  # comment
+            tag_start += 1
+            tag_end = template_find(end_tag, tag_start)
+            text_start = tag_end + end_len
+
+            if not comments:
+                text_end = template_find(start_tag, text_start)
+                continue
+
+            token = True, False, False, empty, s(tag_start, tag_end), -1
+
+        else:  # tags
+            tag_start += 1
+            tag_end = template_find(end_switch, tag_start)
+            text_start = tag_end + end_len + 1
+
+            try:
+                start_tag, end_tag = template[tag_start:tag_end].split(b" ")
+                if not (start_tag and end_tag):
+                    raise ValueError
+
+            except ValueError:
+                raise ValueError
+
+            end_literal = b"}" + end_tag
+            end_switch = b"=" + end_tag
+            start_len = len(start_tag)
+            end_len = len(end_tag)
+            start_end = tag_start + start_len
+            end_start = tag_end - end_len
+            token = (
+                False,
+                False,
+                True,
+                s(tag_start, start_end),
+                s(end_start, tag_end),
+                -1,
+            )
+
+        if tag_end < 0:
+            raise ValueError
+
+        text_end = template_find(start_tag, text_start)
+
+    if stack:
+        raise ValueError
+
+    # end
+    token = False, False, False, empty, t(text_start, None), -1
+    yield token
+
+
 # Numerical values here will be used to break ties in the heap
 
 
@@ -210,35 +396,95 @@ class TokenCursor:
         return TokenTuple(TokenType.LITERAL, literal_string)
 
 
-def mustache_tokenizer(text: str) -> t.List[TokenTuple]:
+def mustache_tokenizer(
+    text: str,
+    tags: t.Tuple[bytes, bytes] = (Rb"{{", Rb"}}"),
+) -> t.List[TokenTuple]:
     # Different tokenizers to deal with the stupid delimiter swaps
-    first_cursor = TokenCursor(text, R"{{", R"}}")
-    res_token_list = []
-    tokenizer_stack = [first_cursor]
-    i = 0
-    # print("text: ", text)
-    while tokenizer_stack:
-        curr_tokenizer = tokenizer_stack.pop()
+    text_bytes = text.encode()
+    res_list = []
+    start_tag, end_tag = tags
+    end_literal = b"}" + end_tag
+    end_switch = b"=" + end_tag
+    cursor_loc = 0
 
-        curr_token = curr_tokenizer.get_next_token()
+    while cursor_loc < len(text_bytes):
+        if len(res_list) > 100:
+            print(res_list)
+            exit()
 
-        while curr_token is not None:
-            # i += 1
+        next_tag_loc = text_bytes.find(start_tag, cursor_loc)
+        next_newline_loc = text_bytes.find(b"\n", cursor_loc)
+        # print(cursor_loc, next_tag_loc, next_newline_loc)
+        # If we're at the tag location, yield it
+        if cursor_loc == next_tag_loc:
+            end_tag_to_search = b"}}"
 
-            # if i > 100:
-            #     print(res_token_list)
-            #     assert False
-            # token_type, data = curr_token
+            tag_type_loc = cursor_loc + len(start_tag)
+            offset = 1
+            # print(len(start_tag))
+            # print(str(text_bytes)[tag_type_loc], text_bytes[tag_type_loc], ord(b"#"))
+            # '!': 'comment',
+            # '#': 'section',
+            # '^': 'inverted section',
+            # '/': 'end',
+            # '>': 'partial',
+            # '=': 'set delimiter?',
+            # '{': 'no escape?',
+            # '&': 'no escape'
+            # TODO do we want to render the empty string key for the
+            # open brackets? We can probably revert to normal chevron
+            # behavior in this case instead oft supporting this case.
+            if text_bytes[tag_type_loc] == ord(b"!"):
+                new_token_type = TokenType.VARIABLE
+            elif text_bytes[tag_type_loc] == ord(b"#"):
+                new_token_type = TokenType.SECTION
+            elif text_bytes[tag_type_loc] == ord(b"^"):
+                new_token_type = TokenType.INVERTED_SECTION
+            elif text_bytes[tag_type_loc] == ord(b"/"):
+                new_token_type = TokenType.END_SECTION
+            elif text_bytes[tag_type_loc] == ord(b">"):
+                new_token_type = TokenType.PARTIAL
+            elif text_bytes[tag_type_loc] == ord(b"="):
+                # TODO the delimiter one needs more checks
+                new_token_type = TokenType.DELIMITER
+                end_tag_to_search = end_switch
+            elif text_bytes[tag_type_loc] in (ord(b"{"), ord(b"&")):
+                # TODO maybe need to strip the inner thing more?
+                new_token_type = TokenType.RAW_VARIABLE
+                if text_bytes[tag_type_loc] == ord(b"{"):
+                    end_tag_to_search = end_literal
+            else:
+                # Just a variable
+                new_token_type = TokenType.VARIABLE
+                offset = 0
 
-            if curr_token.type is TokenType.DELIMITER:
-                raise Exception("Need to implement this case.")
+            end_loc = text_bytes.find(end_tag_to_search, cursor_loc)
 
-            res_token_list.append(curr_token)
+            # yield
+            res_list.append(
+                TokenTuple(
+                    new_token_type,
+                    text_bytes[cursor_loc + len(start_tag) + offset : end_loc],
+                )
+            )
+            cursor_loc = len(end_tag_to_search) + end_loc
+            print(cursor_loc)
 
-            curr_token = curr_tokenizer.get_next_token()
+        # Otherwise, yield the next literal, ending at newlines as-necessary
+        else:
+            next_literal_end = len(text_bytes)
 
-    # Ensures tokenization worked as expected
-    # NOTE must change match group data to get this to pass
-    # assert text == "".join(test_thing)
-    # print(res_token_list)
-    return res_token_list
+            if next_newline_loc != -1:
+                next_literal_end = min(next_literal_end, next_newline_loc) + 1
+
+            if next_tag_loc != -1:
+                next_literal_end = min(next_literal_end, next_tag_loc)
+
+            res_list.append(
+                TokenTuple(TokenType.LITERAL, text_bytes[cursor_loc:next_literal_end])
+            )
+
+            cursor_loc = next_literal_end
+
+    return res_list

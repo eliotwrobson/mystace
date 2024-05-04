@@ -417,6 +417,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     token_list = process_raw_token_list(raw_token_list)
     # print(token_list)
     for token_type, token_data in token_list:
+        token_data = token_data.decode("utf-8")
         if token_type is TokenType.LITERAL:
             literal_node = MustacheTreeNode(TagType.LITERAL, token_data)
             work_stack[-1].add_child(literal_node)

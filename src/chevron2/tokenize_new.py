@@ -438,7 +438,7 @@ def mustache_tokenizer(
                 # TODO give a better error message.
                 raise ex.Chevron2Error("Tag not closed.")
             elif text[tag_type_loc] == "!":
-                new_token_type = TokenType.VARIABLE
+                new_token_type = TokenType.COMMENT
             elif text[tag_type_loc] == "#":
                 new_token_type = TokenType.SECTION
             elif text[tag_type_loc] == "^":
@@ -491,5 +491,5 @@ def mustache_tokenizer(
             )
 
             cursor_loc = next_literal_end
-    print(res_list)
+    #print(res_list)
     return res_list

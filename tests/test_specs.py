@@ -54,6 +54,7 @@ def test_spec_from_folder(datadir: Path) -> None:
             if did_case_fail:
                 print(full_test_case_name)
                 print(repr(result), repr(test_case["expected"]))
+                #assert False, "uncomment to remove fail-fast"
 
             if full_test_case_name not in EXPECTED_TO_FAIL:
                 any_fail = any_fail or did_case_fail

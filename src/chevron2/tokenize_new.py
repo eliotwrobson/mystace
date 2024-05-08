@@ -1,11 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import re
 import typing as t
 from enum import Enum
 
 from more_itertools import peekable
+
+from . import exceptions as ex
 
 TOKEN_TYPES = [(True, False, True, False)] * 0x100
 TOKEN_TYPES[0x21] = False, False, False, True  # '!'
@@ -18,7 +17,7 @@ TOKEN_TYPES[0x5E] = False, True, True, True  # '^'
 TOKEN_TYPES[0x7B] = True, True, False, True  # '{'
 
 
-def slicestrip(template: bytes, start: int, end: int) -> slice:
+def slicestrip(template: str, start: int, end: int) -> slice:
     """
     Strip slice from whitespace on bytes.
 
@@ -33,9 +32,9 @@ def slicestrip(template: bytes, start: int, end: int) -> slice:
 
 
 def tokenize(
-    template: bytes,
+    template: str,
     *,
-    tags: t.Tuple[bytes, bytes] = (Rb"{{", Rb"}}"),
+    tags: t.Tuple[str, str] = (R"{{", R"}}"),
     comments: bool = False,
 ):
     """
@@ -70,8 +69,8 @@ def tokenize(
 
     empty = EMPTY
     start_tag, end_tag = tags
-    end_literal = b"}" + end_tag
-    end_switch = b"=" + end_tag
+    end_literal = "}" + end_tag
+    end_switch = "=" + end_tag
     start_len = len(start_tag)
     end_len = len(end_tag)
 
@@ -158,15 +157,15 @@ def tokenize(
             text_start = tag_end + end_len + 1
 
             try:
-                start_tag, end_tag = template[tag_start:tag_end].split(b" ")
+                start_tag, end_tag = template[tag_start:tag_end]
                 if not (start_tag and end_tag):
                     raise ValueError
 
             except ValueError:
                 raise ValueError
 
-            end_literal = b"}" + end_tag
-            end_switch = b"=" + end_tag
+            end_literal = "}" + end_tag
+            end_switch = "=" + end_tag
             start_len = len(start_tag)
             end_len = len(end_tag)
             start_end = tag_start + start_len
@@ -398,27 +397,27 @@ class TokenCursor:
 
 def mustache_tokenizer(
     text: str,
-    tags: t.Tuple[bytes, bytes] = (Rb"{{", Rb"}}"),
+    tags: t.Tuple[str, str] = (R"{{", R"}}"),
 ) -> t.List[TokenTuple]:
     # Different tokenizers to deal with the stupid delimiter swaps
-    text_bytes = text.encode()
+    #text = text.encode()
     res_list = []
     start_tag, end_tag = tags
-    end_literal = b"}" + end_tag
-    end_switch = b"=" + end_tag
+    end_literal = "}" + end_tag
+    end_switch = "=" + end_tag
     cursor_loc = 0
 
-    while cursor_loc < len(text_bytes):
+    while cursor_loc < len(text):
         if len(res_list) > 100:
             print(res_list)
             exit()
 
-        next_tag_loc = text_bytes.find(start_tag, cursor_loc)
-        next_newline_loc = text_bytes.find(b"\n", cursor_loc)
+        next_tag_loc = text.find(start_tag, cursor_loc)
+        next_newline_loc = text.find("\n", cursor_loc)
         # print(cursor_loc, next_tag_loc, next_newline_loc)
         # If we're at the tag location, yield it
         if cursor_loc == next_tag_loc:
-            end_tag_to_search = b"}}"
+            end_tag_to_search = "}}"
 
             tag_type_loc = cursor_loc + len(start_tag)
             offset = 1
@@ -435,45 +434,51 @@ def mustache_tokenizer(
             # TODO do we want to render the empty string key for the
             # open brackets? We can probably revert to normal chevron
             # behavior in this case instead oft supporting this case.
-            if text_bytes[tag_type_loc] == ord(b"!"):
+            if tag_type_loc >= len(text):
+                # TODO give a better error message.
+                raise ex.Chevron2Error("Tag not closed.")
+            elif text[tag_type_loc] == "!":
                 new_token_type = TokenType.VARIABLE
-            elif text_bytes[tag_type_loc] == ord(b"#"):
+            elif text[tag_type_loc] == "#":
                 new_token_type = TokenType.SECTION
-            elif text_bytes[tag_type_loc] == ord(b"^"):
+            elif text[tag_type_loc] == "^":
                 new_token_type = TokenType.INVERTED_SECTION
-            elif text_bytes[tag_type_loc] == ord(b"/"):
+            elif text[tag_type_loc] == "/":
                 new_token_type = TokenType.END_SECTION
-            elif text_bytes[tag_type_loc] == ord(b">"):
+            elif text[tag_type_loc] == ">":
                 new_token_type = TokenType.PARTIAL
-            elif text_bytes[tag_type_loc] == ord(b"="):
+            elif text[tag_type_loc] == "=":
                 # TODO the delimiter one needs more checks
                 new_token_type = TokenType.DELIMITER
                 end_tag_to_search = end_switch
-            elif text_bytes[tag_type_loc] in (ord(b"{"), ord(b"&")):
+            elif text[tag_type_loc] in ("{", "&"):
                 # TODO maybe need to strip the inner thing more?
                 new_token_type = TokenType.RAW_VARIABLE
-                if text_bytes[tag_type_loc] == ord(b"{"):
+                if text[tag_type_loc] == "{":
                     end_tag_to_search = end_literal
             else:
                 # Just a variable
                 new_token_type = TokenType.VARIABLE
                 offset = 0
 
-            end_loc = text_bytes.find(end_tag_to_search, cursor_loc)
+            end_loc = text.find(end_tag_to_search, cursor_loc)
+
+            if end_loc == -1:
+                raise ex.Chevron2Error("Tag not closed.")
 
             # yield
             res_list.append(
                 TokenTuple(
                     new_token_type,
-                    text_bytes[cursor_loc + len(start_tag) + offset : end_loc],
+                    text[cursor_loc + len(start_tag) + offset : end_loc].strip(),
                 )
             )
             cursor_loc = len(end_tag_to_search) + end_loc
-            print(cursor_loc)
+            #print(cursor_loc)
 
         # Otherwise, yield the next literal, ending at newlines as-necessary
         else:
-            next_literal_end = len(text_bytes)
+            next_literal_end = len(text)
 
             if next_newline_loc != -1:
                 next_literal_end = min(next_literal_end, next_newline_loc) + 1
@@ -482,9 +487,9 @@ def mustache_tokenizer(
                 next_literal_end = min(next_literal_end, next_tag_loc)
 
             res_list.append(
-                TokenTuple(TokenType.LITERAL, text_bytes[cursor_loc:next_literal_end])
+                TokenTuple(TokenType.LITERAL, text[cursor_loc:next_literal_end])
             )
 
             cursor_loc = next_literal_end
-
+    print(res_list)
     return res_list

@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
 import enum
@@ -9,10 +6,9 @@ from collections import deque
 
 import typing_extensions as te
 
-from .exceptions import MissingClosingTagError, NodeHasNoChildren, StrayClosingTagError
+from .exceptions import (MissingClosingTagError, NodeHasNoChildren,
+                         StrayClosingTagError)
 from .tokenize_new import TokenTuple, TokenType, mustache_tokenizer
-
-# from .tokenize import tokenize
 from .util import html_escape
 
 # be returned
@@ -212,6 +208,7 @@ class MustacheRenderer:
                 or curr_node.tag_type is TagType.VARIABLE_RAW
             ):
                 variable_content = curr_context.get(curr_node.data)
+                #print(repr(curr_node.data), curr_context.context)
                 if variable_content is not None:
                     str_content = str(variable_content)
                     # Skip ahead if we get the empty string
@@ -417,7 +414,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     token_list = process_raw_token_list(raw_token_list)
     # print(token_list)
     for token_type, token_data in token_list:
-        token_data = token_data.decode("utf-8")
+        #token_data = token_data.decode("utf-8")
         if token_type is TokenType.LITERAL:
             literal_node = MustacheTreeNode(TagType.LITERAL, token_data)
             work_stack[-1].add_child(literal_node)
@@ -458,7 +455,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             partial_node = MustacheTreeNode(TagType.PARTIAL, token_data)
             work_stack[-1].add_child(partial_node)
         else:
-            print(token_type, token_data)
+            # print(token_type, token_data)
             # assert_never(token_type)
             raise Exception
 

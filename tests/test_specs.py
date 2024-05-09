@@ -51,14 +51,15 @@ def test_spec_from_folder(datadir: Path) -> None:
             )
             did_case_fail = result != test_case["expected"]
 
-            if did_case_fail:
+            if did_case_fail or full_test_case_name in EXPECTED_TO_FAIL:
                 print(full_test_case_name)
                 print(repr(result), repr(test_case["expected"]))
-                #assert False, "uncomment to remove fail-fast"
+                # assert False, "uncomment to remove fail-fast"
 
             if full_test_case_name not in EXPECTED_TO_FAIL:
                 any_fail = any_fail or did_case_fail
             else:
                 assert did_case_fail
 
+    assert False
     assert not any_fail

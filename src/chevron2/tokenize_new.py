@@ -393,10 +393,9 @@ class TokenType(Enum):
 
 
 class TokenTuple(t.NamedTuple):
-    # TODO add "offset" as an attribute to this tuple, will be used
-    # by partials to compute indentation.
     type: TokenType
     data: str
+    offset: int  # used by partials to compute indentation.
 
 
 def mustache_tokenizer(
@@ -410,12 +409,9 @@ def mustache_tokenizer(
     end_literal = "}" + end_tag
     end_switch = "=" + end_tag
     cursor_loc = 0
+    newline_offset = 0
 
     while cursor_loc < len(text):
-        # if len(res_list) > 100:
-        #    print(res_list)
-        #    exit()
-
         next_tag_loc = text.find(start_tag, cursor_loc)
         next_newline_loc = text.find("\n", cursor_loc)
         # print(cursor_loc, next_tag_loc, next_newline_loc)
@@ -475,6 +471,7 @@ def mustache_tokenizer(
                 TokenTuple(
                     new_token_type,
                     text[cursor_loc + len(start_tag) + offset : end_loc].strip(),
+                    newline_offset,
                 )
             )
             cursor_loc = len(end_tag_to_search) + end_loc
@@ -491,7 +488,9 @@ def mustache_tokenizer(
                 next_literal_end = min(next_literal_end, next_tag_loc)
 
             res_list.append(
-                TokenTuple(TokenType.LITERAL, text[cursor_loc:next_literal_end])
+                TokenTuple(
+                    TokenType.LITERAL, text[cursor_loc:next_literal_end], newline_offset
+                )
             )
 
             cursor_loc = next_literal_end

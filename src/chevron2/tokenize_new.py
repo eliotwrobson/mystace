@@ -1,11 +1,9 @@
-import re
 import typing as t
 from enum import Enum
 
-from more_itertools import peekable
-
 from . import exceptions as ex
 
+"""
 TOKEN_TYPES = [(True, False, True, False)] * 0x100
 TOKEN_TYPES[0x21] = False, False, False, True  # '!'
 TOKEN_TYPES[0x23] = False, True, True, False  # '#'
@@ -18,7 +16,7 @@ TOKEN_TYPES[0x7B] = True, True, False, True  # '{'
 
 
 def slicestrip(template: str, start: int, end: int) -> slice:
-    """
+
     Strip slice from whitespace on bytes.
 
     :param template: bytes where whitespace should be stripped
@@ -26,7 +24,7 @@ def slicestrip(template: str, start: int, end: int) -> slice:
     :param end: substring slice end
     :returns: resulting stripped slice
 
-    """
+
     c = template[start:end]
     return slice(end - len(c.lstrip()), start + len(c.rstrip()))
 
@@ -37,7 +35,7 @@ def tokenize(
     tags: t.Tuple[str, str] = (R"{{", R"}}"),
     comments: bool = False,
 ):
-    """
+
     Generate token tuples from mustache template.
 
     This generator accepts sending back a token index, which will result on
@@ -53,7 +51,7 @@ def tokenize(
     :raises ClosingTokenException: if block closing token does not match
     :raises DelimiterTokenException: if delimiter token syntax is invalid
 
-    """
+
     EMPTY = slice(0)
     EVERYTHING = slice(None)
 
@@ -195,31 +193,7 @@ def tokenize(
 # Numerical values here will be used to break ties in the heap
 
 
-class TokenType(Enum):
-    COMMENT = 0
-    RAW_VARIABLE = 1
-    SECTION = 2
-    INVERTED_SECTION = 3
-    END_SECTION = 4
-    DELIMITER = 5
-    PARTIAL = 6
-    VARIABLE = 8
-    LITERAL = 9
 
-    def __lt__(self, other: t.Any) -> bool:
-        """
-        From: https://stackoverflow.com/a/39269589
-        """
-        if self.__class__ is other.__class__:
-            return self.value < other.value
-        return NotImplemented
-
-
-class TokenTuple(t.NamedTuple):
-    # TODO add "offset" as an attribute to this tuple, will be used
-    # by partials to compute indentation.
-    type: TokenType
-    data: str
 
 
 class HeapToken(t.NamedTuple):
@@ -230,9 +204,9 @@ class HeapToken(t.NamedTuple):
 
 
 class TokenCursor:
-    """
+
     A token cursor, yielding tokens with a given delimiter.
-    """
+
 
     token_heap: t.List[HeapToken]
     cursor_loc: int
@@ -393,6 +367,36 @@ class TokenCursor:
 
         self.cursor_loc = next_cursor_loc
         return TokenTuple(TokenType.LITERAL, literal_string)
+"""
+
+
+class TokenType(Enum):
+    COMMENT = 0
+    RAW_VARIABLE = 1
+    SECTION = 2
+    INVERTED_SECTION = 3
+    END_SECTION = 4
+    DELIMITER = 5
+    PARTIAL = 6
+    VARIABLE = 8
+    LITERAL = 9
+
+    # TODO get rid of this funciton. I think this was only needed
+    # if these were getting inserted into a heap, but they are not now.
+    def __lt__(self, other: t.Any) -> bool:
+        """
+        From: https://stackoverflow.com/a/39269589
+        """
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+
+
+class TokenTuple(t.NamedTuple):
+    # TODO add "offset" as an attribute to this tuple, will be used
+    # by partials to compute indentation.
+    type: TokenType
+    data: str
 
 
 def mustache_tokenizer(
@@ -400,7 +404,7 @@ def mustache_tokenizer(
     tags: t.Tuple[str, str] = (R"{{", R"}}"),
 ) -> t.List[TokenTuple]:
     # Different tokenizers to deal with the stupid delimiter swaps
-    #text = text.encode()
+    # text = text.encode()
     res_list = []
     start_tag, end_tag = tags
     end_literal = "}" + end_tag
@@ -408,9 +412,9 @@ def mustache_tokenizer(
     cursor_loc = 0
 
     while cursor_loc < len(text):
-        if len(res_list) > 100:
-            print(res_list)
-            exit()
+        # if len(res_list) > 100:
+        #    print(res_list)
+        #    exit()
 
         next_tag_loc = text.find(start_tag, cursor_loc)
         next_newline_loc = text.find("\n", cursor_loc)
@@ -474,7 +478,7 @@ def mustache_tokenizer(
                 )
             )
             cursor_loc = len(end_tag_to_search) + end_loc
-            #print(cursor_loc)
+            # print(cursor_loc)
 
         # Otherwise, yield the next literal, ending at newlines as-necessary
         else:
@@ -491,5 +495,5 @@ def mustache_tokenizer(
             )
 
             cursor_loc = next_literal_end
-    #print(res_list)
+    # print(res_list)
     return res_list

@@ -6,8 +6,7 @@ from collections import deque
 
 import typing_extensions as te
 
-from .exceptions import (MissingClosingTagError, NodeHasNoChildren,
-                         StrayClosingTagError)
+from .exceptions import MissingClosingTagError, NodeHasNoChildren, StrayClosingTagError
 from .tokenize_new import TokenTuple, TokenType, mustache_tokenizer
 from .util import html_escape
 
@@ -208,7 +207,7 @@ class MustacheRenderer:
                 or curr_node.tag_type is TagType.VARIABLE_RAW
             ):
                 variable_content = curr_context.get(curr_node.data)
-                #print(repr(curr_node.data), curr_context.context)
+                # print(repr(curr_node.data), curr_context.context)
                 if variable_content is not None:
                     str_content = str(variable_content)
                     # Skip ahead if we get the empty string
@@ -276,7 +275,11 @@ def handle_final_line_clear(
     token_list: t.List, target_tokens: t.Tuple[TokenType, ...]
 ) -> None:
     if len(token_list) >= 2 and token_list[-1][0] in target_tokens:
-        prev_type, prev_data = token_list[-2]
+        (
+            prev_type,
+            prev_data,
+            prev_offset,
+        ) = token_list[-2]
 
         # Prev token is a whitespace literal we can possibly delete
         if (
@@ -289,7 +292,7 @@ def handle_final_line_clear(
                 token_list.pop(-2)
                 return
 
-            skip_prev_type, skip_prev_data = token_list[-3]
+            skip_prev_type, skip_prev_data, skip_prev_offset = token_list[-3]
 
             if skip_prev_type is TokenType.LITERAL and skip_prev_data.endswith("\n"):
                 token_list.pop(-2)
@@ -313,7 +316,7 @@ def process_raw_token_list(
     res_token_list: t.List[TokenTuple] = []
     # TODO do token whitespace processing and partial replacement here.
     for i, token in enumerate(raw_token_list):
-        token_type, token_data = token
+        token_type, token_data, _ = token
 
         # TODO to actually do this, we need to know whether this token is the start of a line and not something
         # coming after a tag
@@ -346,7 +349,9 @@ def process_raw_token_list(
             # If the spaces behind the tag are a whitespace-only literal that
             # doesn't start a new line, get rid of it
             elif len(res_token_list) >= 2:
-                double_prev_type, double_prev_data = res_token_list[-2]
+                double_prev_type, double_prev_data, double_prev_offset = res_token_list[
+                    -2
+                ]
 
                 if double_prev_type is TokenType.LITERAL:
                     if len(res_token_list) == 2:
@@ -361,7 +366,9 @@ def process_raw_token_list(
                         )
                     else:
                         # print("TRIPLE PREV CASE")
-                        triple_prev_type, triple_prev_data = res_token_list[-3]
+                        triple_prev_type, triple_prev_data, triple_prev_offset = (
+                            res_token_list[-3]
+                        )
                         # print(triple_prev_type, triple_prev_data)
                         remove_double_prev = (
                             double_prev_data.isspace()
@@ -413,8 +420,8 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     raw_token_list = mustache_tokenizer(thing)
     token_list = process_raw_token_list(raw_token_list)
     # print(token_list)
-    for token_type, token_data in token_list:
-        #token_data = token_data.decode("utf-8")
+    for token_type, token_data, token_offset in token_list:
+        # token_data = token_data.decode("utf-8")
         if token_type is TokenType.LITERAL:
             literal_node = MustacheTreeNode(TagType.LITERAL, token_data)
             work_stack[-1].add_child(literal_node)

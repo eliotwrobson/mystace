@@ -111,19 +111,22 @@ class TagType(enum.Enum):
 
 
 class MustacheTreeNode:
-    __slots__ = ("tag_type", "data", "children")
+    __slots__ = ("tag_type", "data", "children", "offset")
 
     tag_type: TagType
     data: str
     children: t.Optional[t.List[MustacheTreeNode]]
+    offset: int
 
     def __init__(
         self,
         tag_type: TagType,
         data: str,
+        offset: int,
     ) -> None:
         self.tag_type = tag_type
         self.data = data
+        self.offset = offset
 
         # ROOT = -1
         # LITERAL = 0
@@ -192,15 +195,23 @@ class MustacheRenderer:
         assert self.mustache_tree.children is not None
 
         # Never need to read the root because it has no data
-        work_deque: t.Deque[t.Tuple[MustacheTreeNode, ContextNode]] = deque(
-            (node, starting_context) for node in self.mustache_tree.children
+        work_deque: t.Deque[t.Tuple[MustacheTreeNode, ContextNode, int]] = deque(
+            (node, starting_context, self.mustache_tree.offset)
+            for node in self.mustache_tree.children
         )
         # print(context)
         while work_deque:
-            curr_node, curr_context = work_deque.popleft()
+            curr_node, curr_context, curr_offset = work_deque.popleft()
             # print(curr_node.tag_type)
             if curr_node.tag_type is TagType.LITERAL:
                 res_list.append(curr_node.data)
+
+                # Add offset for partials after newline.
+                # TODO figure out how to get better offset indentation
+                # behavior.
+                if curr_node.data.endswith("\n"):
+                    res_list.append(curr_offset * " ")
+
             # TODO combine the cases below
             elif (
                 curr_node.tag_type is TagType.VARIABLE
@@ -225,7 +236,7 @@ class MustacheRenderer:
                 for new_context_stack in reversed(new_context_stacks):
                     for child_node in reversed(curr_node.children):
                         # No need to make a copy of the context per-child, it's immutable
-                        work_deque.appendleft((child_node, new_context_stack))
+                        work_deque.appendleft((child_node, new_context_stack, 0))
 
             elif curr_node.tag_type is TagType.INVERTED_SECTION:
                 # No need to add to the context stack, inverted sections
@@ -236,7 +247,7 @@ class MustacheRenderer:
 
                 if not bool(lookup_data):
                     for child_node in reversed(curr_node.children):
-                        work_deque.appendleft((child_node, curr_context))
+                        work_deque.appendleft((child_node, curr_context, 0))
 
             elif curr_node.tag_type is TagType.PARTIAL:
                 partial_tree = self.partials_dict.get(curr_node.data)
@@ -248,7 +259,7 @@ class MustacheRenderer:
                 assert partial_tree.children is not None
 
                 for child_node in reversed(partial_tree.children):
-                    work_deque.appendleft((child_node, curr_context))
+                    work_deque.appendleft((child_node, curr_context, curr_node.offset))
 
         return "".join(res_list)
 
@@ -412,10 +423,7 @@ def process_raw_token_list(
 
 def create_mustache_tree(thing: str) -> MustacheTreeNode:
     # TODO make a special tag type for the root? Unsure
-    root = MustacheTreeNode(
-        TagType.ROOT,
-        "",
-    )
+    root = MustacheTreeNode(TagType.ROOT, "", 0)
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
     raw_token_list = mustache_tokenizer(thing)
     token_list = process_raw_token_list(raw_token_list)
@@ -423,7 +431,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     for token_type, token_data, token_offset in token_list:
         # token_data = token_data.decode("utf-8")
         if token_type is TokenType.LITERAL:
-            literal_node = MustacheTreeNode(TagType.LITERAL, token_data)
+            literal_node = MustacheTreeNode(TagType.LITERAL, token_data, token_offset)
             work_stack[-1].add_child(literal_node)
 
         elif token_type in [TokenType.SECTION, TokenType.INVERTED_SECTION]:
@@ -432,7 +440,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
                 if token_type is TokenType.SECTION
                 else TagType.INVERTED_SECTION
             )
-            section_node = MustacheTreeNode(tag_type, token_data)
+            section_node = MustacheTreeNode(tag_type, token_data, token_offset)
             # Add section to list of children
             work_stack[-1].add_child(section_node)
 
@@ -452,14 +460,14 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
                 if token_type is TokenType.VARIABLE
                 else TagType.VARIABLE_RAW
             )
-            variable_node = MustacheTreeNode(tag_type, token_data)
+            variable_node = MustacheTreeNode(tag_type, token_data, token_offset)
             # Add section to list of children
 
             work_stack[-1].add_child(variable_node)
         elif token_type is TokenType.COMMENT:
             pass
         elif token_type is TokenType.PARTIAL:
-            partial_node = MustacheTreeNode(TagType.PARTIAL, token_data)
+            partial_node = MustacheTreeNode(TagType.PARTIAL, token_data, token_offset)
             work_stack[-1].add_child(partial_node)
         else:
             # print(token_type, token_data)

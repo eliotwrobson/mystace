@@ -413,7 +413,6 @@ def mustache_tokenizer(
 
     while cursor_loc < len(text):
         next_tag_loc = text.find(start_tag, cursor_loc)
-        next_newline_loc = text.find("\n", cursor_loc)
         # print(cursor_loc, next_tag_loc, next_newline_loc)
         # If we're at the tag location, yield it
         if cursor_loc == next_tag_loc:
@@ -480,9 +479,10 @@ def mustache_tokenizer(
         # Otherwise, yield the next literal, ending at newlines as-necessary
         else:
             next_literal_end = len(text)
+            next_newline_loc = text.find("\n", cursor_loc)
 
             if next_newline_loc != -1:
-                next_literal_end = min(next_literal_end, next_newline_loc) + 1
+                next_literal_end = min(next_literal_end, next_newline_loc + 1)
 
             if next_tag_loc != -1:
                 next_literal_end = min(next_literal_end, next_tag_loc)

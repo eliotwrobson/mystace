@@ -6,7 +6,12 @@ from collections import deque
 
 import typing_extensions as te
 
-from .exceptions import MissingClosingTagError, NodeHasNoChildren, StrayClosingTagError
+from .exceptions import (
+    Chevron2Error,
+    MissingClosingTagError,
+    NodeHasNoChildren,
+    StrayClosingTagError,
+)
 from .tokenize_new import TokenTuple, TokenType, mustache_tokenizer
 from .util import html_escape
 
@@ -316,7 +321,7 @@ def process_raw_token_list(
     res_token_list: t.List[TokenTuple] = []
     # TODO do token whitespace processing and partial replacement here.
     for i, token in enumerate(raw_token_list):
-        token_type, token_data, _ = token
+        token_type, token_data, token_offset = token
 
         # TODO to actually do this, we need to know whether this token is the start of a line and not something
         # coming after a tag
@@ -464,7 +469,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
         else:
             # print(token_type, token_data)
             # assert_never(token_type)
-            raise Exception
+            raise Chevron2Error
 
     if work_stack[-1].tag_type is not TagType.ROOT:
         raise MissingClosingTagError(f"Missing closing tag for {work_stack[-1].data}")

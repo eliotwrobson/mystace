@@ -44,6 +44,7 @@ def mustache_tokenizer(
     end_switch = "=" + end_tag
     cursor_loc = 0
     newline_offset = 0
+    seen_tag_in_current_line = False
 
     while cursor_loc < len(text):
         next_tag_loc = text.find(start_tag, cursor_loc)
@@ -99,15 +100,23 @@ def mustache_tokenizer(
             if end_loc == -1:
                 raise ex.Chevron2Error("Tag not closed.")
 
+            # This handles the "inline indentation" case, where a partial
+            # doesn't get indented if it is not the first tag on a line
+            if seen_tag_in_current_line:
+                effective_newline_offset = 0
+            else:
+                effective_newline_offset = newline_offset
+
             # yield
             res_list.append(
                 TokenTuple(
                     new_token_type,
                     text[cursor_loc + len(start_tag) + offset : end_loc].strip(),
-                    newline_offset,
+                    effective_newline_offset,
                 )
             )
             cursor_loc = len(end_tag_to_search) + end_loc
+            seen_tag_in_current_line = True
             # print(cursor_loc)
 
         # Otherwise, yield the next literal, ending at newlines as-necessary
@@ -127,6 +136,7 @@ def mustache_tokenizer(
 
             if literal_text.endswith("\n"):
                 newline_offset = 0
+                seen_tag_in_current_line = False
             else:
                 newline_offset += len(literal_text)
 

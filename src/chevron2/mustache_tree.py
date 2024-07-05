@@ -6,8 +6,12 @@ from collections import deque
 
 import typing_extensions as te
 
-from .exceptions import (Chevron2Error, MissingClosingTagError,
-                         NodeHasNoChildren, StrayClosingTagError)
+from .exceptions import (
+    Chevron2Error,
+    MissingClosingTagError,
+    NodeHasNoChildren,
+    StrayClosingTagError,
+)
 from .tokenize_new import TokenTuple, TokenType, mustache_tokenizer
 from .util import html_escape
 
@@ -211,7 +215,7 @@ class MustacheRenderer:
                 # TODO figure out how to get better offset indentation
                 # behavior.
                 if curr_node.data.endswith("\n"):
-                    res_list.append(curr_offset * "-")
+                    res_list.append(curr_offset * " ")
 
             # TODO combine the cases below
             elif (
@@ -378,11 +382,9 @@ def process_raw_token_list(
                         )
                     else:
                         # print("TRIPLE PREV CASE")
-                        (
-                            triple_prev_type,
-                            triple_prev_data,
-                            triple_prev_offset,
-                        ) = res_token_list[-3]
+                        triple_prev_type, triple_prev_data, triple_prev_offset = (
+                            res_token_list[-3]
+                        )
                         # print(triple_prev_type, triple_prev_data)
                         remove_double_prev = (
                             double_prev_data.isspace()

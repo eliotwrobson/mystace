@@ -32,7 +32,7 @@ jobs:
         run: poetry install --with dev
 
       - name: Run ruff
-        run:
+        run: |
           poetry run ruff check .
           poetry run ruff format --check .
 

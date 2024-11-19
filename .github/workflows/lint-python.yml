@@ -13,8 +13,8 @@ jobs:
   ci:
     strategy:
       matrix:
-        python-version: ["3.12"]
-        poetry-version: ["1.8.1"]
+        python-version: ["3.13"]
+        poetry-version: ["1.8.4"]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:

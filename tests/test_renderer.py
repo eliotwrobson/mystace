@@ -6,8 +6,13 @@ import typing as t
 
 import pytest
 
-from chevron2 import (Chevron2Error, DelimiterError, MissingClosingTagError,
-                      StrayClosingTagError, render_from_template)
+from mystace import (
+    DelimiterError,
+    MissingClosingTagError,
+    MystaceError,
+    StrayClosingTagError,
+    render_from_template,
+)
 
 # TODO get test cases from here https://gitlab.com/ergoithz/ustache/-/blob/master/tests.py?ref_type=heads
 # and here https://github.com/michaelrccurtis/moosetash/blob/main/tests/test_context.py
@@ -125,7 +130,7 @@ def test_falsy() -> None:
     assert result == expected
 
 
-# TODO https://github.com/eliotwrobson/chevron2/issues/3
+# TODO https://github.com/eliotwrobson/mystace/issues/3
 # def test_complex():
 #     class Complex:
 #         def __init__(self):
@@ -142,7 +147,7 @@ def test_falsy() -> None:
 #     assert result == expected
 
 
-# https://github.com/noahmorrison/chevron2/issues/17
+# https://github.com/noahmorrison/chevron/issues/17
 def test_inverted_coercion() -> None:
     args = {
         "template": "{{#object}}{{^child}}{{.}}{{/child}}{{/object}}",
@@ -160,11 +165,12 @@ def test_closing_tag_only() -> None:
     # https://github.com/noahmorrison/chevron/blob/main/test_spec.py#L225
     args = {"template": "{{ foo } bar", "data": {"foo": "xx"}}
 
-    with pytest.raises(Chevron2Error):
+    with pytest.raises(MystaceError):
         render_from_template(**args)  # type: ignore
-    #expected = "{{ foo } bar"
+    # expected = "{{ foo } bar"
 
-    #assert res == expected
+    # assert res == expected
+
 
 # TODO check the original test case, since I'm not 1000% sure how I change this before.
 @pytest.mark.xfail
@@ -439,7 +445,7 @@ def test_left_delimiter_eof() -> None:
 
     with pytest.raises(Chevron2Error):
         render_from_template(template, data)
-    #assert template == render_from_template(template, data)
+    # assert template == render_from_template(template, data)
 
 
 def test_no_content_tag() -> None:

@@ -11,7 +11,7 @@ https://github.com/mustache/spec/releases/tag/v1.4.1
 import json
 from pathlib import Path
 
-from chevron2 import render_from_template
+from mystace import render_from_template
 
 # Names of tests to skip for now that fail, TODO debug these.
 # Not a huuuuuge deal, all of the standard failing ones are
@@ -30,6 +30,7 @@ def test_spec_from_folder(datadir: Path) -> None:
 
     any_fail = False
     for test_path in datadir.iterdir():
+        # TODO get these tests working later
         if test_path.name in (
             "delimiters.json",
             "~dynamic-names.json",
@@ -51,15 +52,9 @@ def test_spec_from_folder(datadir: Path) -> None:
             )
             did_case_fail = result != test_case["expected"]
 
-            if did_case_fail or full_test_case_name in EXPECTED_TO_FAIL:
-                print(full_test_case_name)
-                print(repr(result), repr(test_case["expected"]))
-                # assert False, "uncomment to remove fail-fast"
-
             if full_test_case_name not in EXPECTED_TO_FAIL:
                 any_fail = any_fail or did_case_fail
             else:
                 assert did_case_fail
 
-    assert False
     assert not any_fail

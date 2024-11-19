@@ -1,4 +1,4 @@
-from chevron2.tokenize_new import mustache_tokenizer
+from mystace.tokenize_new import mustache_tokenizer
 
 
 def test_tokenize() -> None:

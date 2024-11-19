@@ -1,7 +1,7 @@
 # import io
 from pathlib import Path
 
-# from chevron2 import render
+# from mystace import render
 # https://github.com/sakhezech/combustache/blob/main/src/combustache/__main__.py
 
 

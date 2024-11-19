@@ -7,8 +7,8 @@ from collections import deque
 import typing_extensions as te
 
 from .exceptions import (
-    Chevron2Error,
     MissingClosingTagError,
+    MystaceError,
     NodeHasNoChildren,
     StrayClosingTagError,
 )
@@ -477,7 +477,7 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
         else:
             # print(token_type, token_data)
             # assert_never(token_type)
-            raise Chevron2Error
+            raise MystaceError
 
     if work_stack[-1].tag_type is not TagType.ROOT:
         raise MissingClosingTagError(f"Missing closing tag for {work_stack[-1].data}")

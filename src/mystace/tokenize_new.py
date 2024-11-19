@@ -70,7 +70,7 @@ def mustache_tokenizer(
             # behavior in this case instead oft supporting this case.
             if tag_type_loc >= len(text):
                 # TODO give a better error message.
-                raise ex.Chevron2Error("Tag not closed.")
+                raise ex.MystaceError("Tag not closed.")
             elif text[tag_type_loc] == "!":
                 new_token_type = TokenType.COMMENT
             elif text[tag_type_loc] == "#":
@@ -98,7 +98,7 @@ def mustache_tokenizer(
             end_loc = text.find(end_tag_to_search, cursor_loc)
 
             if end_loc == -1:
-                raise ex.Chevron2Error("Tag not closed.")
+                raise ex.MystaceError("Tag not closed.")
 
             # This handles the "inline indentation" case, where a partial
             # doesn't get indented if it is not the first tag on a line

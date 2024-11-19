@@ -13,20 +13,21 @@ import typing as t
 import warnings
 
 import chevron
-import chevron2
 import pytest
 from faker import Faker
 from typing_extensions import assert_never
 
+import mystace
+
 RenderFunctionT = t.Literal[
-    "chevron2",
+    "mystace",
     "chevron",
     "combustache",
     "moosetash",
     "pystache",
     "ustache",
     "ustache-full",
-    "chevron2-full",
+    "mystace-full",
 ]
 TestCaseT = t.Tuple[str, t.Dict[str, int]]
 TestCaseGeneratorT = t.Callable[[int], TestCaseT]
@@ -315,16 +316,16 @@ def test_large(
 
     template, names = test_case_generator(n)  # type: ignore
 
-    if render_function_name == "chevron2":
+    if render_function_name == "mystace":
         # NOTE Benchmarking with this isn't totally cheating since some of these libraries
         # to caching, meaning that the benchmark object is timing the cached version on
         # everything past the first run.
-        renderer = chevron2.MustacheRenderer.from_template(template)
+        renderer = mystace.MustacheRenderer.from_template(template)
 
         def render_function(_, obj):
             return renderer.render(obj)
-    elif render_function_name == "chevron2-full":
-        render_function = chevron2.render_from_template
+    elif render_function_name == "mystace-full":
+        render_function = mystace.render_from_template
     elif render_function_name == "chevron":
         render_function = chevron.render
     elif render_function_name == "combustache":

@@ -11,7 +11,7 @@ from .mustache_tree import render_from_template
 
 def cli(argv=None):
     parser = argparse.ArgumentParser(
-        prog="chevron2",
+        prog="mystace",
         description="an explosive mustache v1.4 implementation with lambdas",
     )
 
@@ -19,7 +19,7 @@ def cli(argv=None):
         "-v",
         "--version",
         action="version",
-        version=version("chevron2"),
+        version=version("mystace"),
     )
 
     parser.add_argument(

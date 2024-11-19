@@ -5,15 +5,15 @@
 # https://github.com/michaelrccurtis/moosetash/blob/main/moosetash/exceptions.py
 
 
-class Chevron2Error(Exception):
+class MystaceError(Exception):
     """
-    Chevron2 base exception. Not raised.
+    Mystace base exception. Not raised.
     """
 
     pass
 
 
-class NodeHasNoChildren(Chevron2Error):
+class NodeHasNoChildren(MystaceError):
     """
     Tried to access children of a MustacheTreeNode type that does not
     have any.
@@ -22,7 +22,7 @@ class NodeHasNoChildren(Chevron2Error):
     pass
 
 
-class DelimiterError(Chevron2Error):
+class DelimiterError(MystaceError):
     """
     A delimiter tag contents are wrong.
     """
@@ -30,7 +30,7 @@ class DelimiterError(Chevron2Error):
     pass
 
 
-class MissingClosingTagError(Chevron2Error):
+class MissingClosingTagError(MystaceError):
     """
     A closing tag for an opened tag is not found.
     """
@@ -38,7 +38,7 @@ class MissingClosingTagError(Chevron2Error):
     pass
 
 
-class StrayClosingTagError(Chevron2Error):
+class StrayClosingTagError(MystaceError):
     """
     A closing tag for an unopened tag is found.
     """

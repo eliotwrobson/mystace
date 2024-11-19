@@ -24,21 +24,21 @@ Typical usage as CLI: ::
     Hello world!
 """
 
-from chevron2.exceptions import (
-    Chevron2Error,
+from mystace.exceptions import (
     DelimiterError,
     MissingClosingTagError,
+    MystaceError,
     StrayClosingTagError,
 )
-from chevron2.mustache_tree import (
+from mystace.mustache_tree import (
     MustacheRenderer,
     create_mustache_tree,
     render_from_template,
 )
-from chevron2.tokenize_new import mustache_tokenizer
+from mystace.tokenize_new import mustache_tokenizer
 
 __all__ = [
-    "Chevron2Error",
+    "MystaceError",
     "DelimiterError",
     "MissingClosingTagError",
     "StrayClosingTagError",

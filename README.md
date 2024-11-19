@@ -2,8 +2,8 @@
 # mystace - A fast, pure Python {{mustache}} renderer
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-[![tests](https://github.com/eliotwrobson/chevron2/actions/workflows/tests.yml/badge.svg)](https://github.com/eliotwrobson/chevron2/actions/workflows/tests.yml)
-[![lint](https://github.com/eliotwrobson/chevron2/actions/workflows/lint-python.yml/badge.svg)](https://github.com/eliotwrobson/chevron2/actions/workflows/lint-python.yml)
+[![tests](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml/badge.svg)](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml)
+[![lint](https://github.com/eliotwrobson/mystace/actions/workflows/lint-python.yml/badge.svg)](https://github.com/eliotwrobson/mystace/actions/workflows/lint-python.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
@@ -11,12 +11,12 @@
 A Python implementation of the [{{mustache}}](http://mustache.github.io) templating language. It's compliant with
 the [specifications](https://github.com/mustache/spec) up to v1.4.1.
 
-Why chevron2?
+Why mystace?
 ------------
 
 I'm glad you asked!
 
-### chevron2 is fast ###
+### mystace is fast ###
 
 Included microbenchmarks show mystace heavily outperforming all other libraries tested.
 

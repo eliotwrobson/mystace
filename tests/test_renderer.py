@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 import collections
 import typing as t
 
@@ -443,7 +440,7 @@ def test_left_delimiter_eof() -> None:
     template = "{{"
     data: t.Dict = {}
 
-    with pytest.raises(Chevron2Error):
+    with pytest.raises(MystaceError):
         render_from_template(template, data)
     # assert template == render_from_template(template, data)
 

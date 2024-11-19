@@ -55,6 +55,6 @@ def test_spec_from_folder(datadir: Path) -> None:
             if full_test_case_name not in EXPECTED_TO_FAIL:
                 any_fail = any_fail or did_case_fail
             else:
-                assert did_case_fail
+                assert did_case_fail, full_test_case_name
 
     assert not any_fail

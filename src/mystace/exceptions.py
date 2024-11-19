@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 # https://github.com/michaelrccurtis/moosetash/blob/main/moosetash/handlers.py
 # https://github.com/michaelrccurtis/moosetash/blob/main/moosetash/exceptions.py
 

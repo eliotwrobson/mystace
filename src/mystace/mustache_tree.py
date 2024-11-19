@@ -12,7 +12,7 @@ from .exceptions import (
     NodeHasNoChildren,
     StrayClosingTagError,
 )
-from .tokenize_new import TokenTuple, TokenType, mustache_tokenizer
+from .tokenize import TokenTuple, TokenType, mustache_tokenizer
 from .util import html_escape
 
 # be returned

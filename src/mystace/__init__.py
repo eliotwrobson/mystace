@@ -35,7 +35,7 @@ from mystace.mustache_tree import (
     create_mustache_tree,
     render_from_template,
 )
-from mystace.tokenize_new import mustache_tokenizer
+from mystace.tokenize import mustache_tokenizer
 
 __all__ = [
     "MystaceError",

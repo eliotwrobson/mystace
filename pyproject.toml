@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "chevron2"
+version = "0.1.0"
+description = "A revised version of Chevron, for rendering mustache templates in Python"
+authors = ["Eliot Robson <eliot.robson24@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

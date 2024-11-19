@@ -32,7 +32,9 @@ jobs:
         run: poetry install --with dev
 
       - name: Run ruff
-        run: poetry run ruff check .
+        run:
+          poetry run ruff check .
+          poetry run ruff format --check .
 
       - name: Run mypy
         run: poetry run mypy .

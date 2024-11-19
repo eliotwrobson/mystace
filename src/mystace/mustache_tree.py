@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 import typing as t
+import warnings
 from collections import deque
 
 import typing_extensions as te
@@ -490,4 +491,9 @@ def render_from_template(
     data: ContextObjT = None,
     partials: t.Optional[t.Dict[str, str]] = None,
 ) -> str:
+    if partials is not None:
+        warnings.warn(
+            "Use of partials is experimental and not fully up to spec. Use at your own risk!!"
+        )
+
     return MustacheRenderer.from_template(template, partials).render(data)

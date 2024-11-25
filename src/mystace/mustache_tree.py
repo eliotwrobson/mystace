@@ -194,7 +194,9 @@ class MustacheRenderer:
         else:
             self.partials_dict = {}
 
-    def render(self, data: ContextObjT, stringify: t.Callable[[t.Any], str] = str) -> str:
+    def render(
+        self, data: ContextObjT, stringify: t.Callable[[t.Any], str] = str
+    ) -> str:
         res_list = []
         starting_context = ContextNode(data)
 
@@ -490,7 +492,7 @@ def render_from_template(
     template: str,
     data: ContextObjT = None,
     partials: t.Optional[t.Dict[str, str]] = None,
-    stringify: t.Callable[[t.Any], str] = str
+    stringify: t.Callable[[t.Any], str] = str,
 ) -> str:
     if partials is not None:
         warnings.warn(

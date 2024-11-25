@@ -480,9 +480,6 @@ def test_stray_closing_tag() -> None:
 
 # Tests below from:
 # https://github.com/sakhezech/combustache/blob/main/tests/custom/test_opts.py
-
-
-@pytest.mark.xfail
 def test_stringify():
     template = "This statement is {{bool}}."
     data = {"bool": True}

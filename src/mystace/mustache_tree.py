@@ -194,7 +194,7 @@ class MustacheRenderer:
         else:
             self.partials_dict = {}
 
-    def render(self, data: ContextObjT) -> str:
+    def render(self, data: ContextObjT, stringify: t.Callable[[t.Any], str] = str) -> str:
         res_list = []
         starting_context = ContextNode(data)
 
@@ -226,7 +226,7 @@ class MustacheRenderer:
                 variable_content = curr_context.get(curr_node.data)
                 # print(repr(curr_node.data), curr_context.context)
                 if variable_content is not None:
-                    str_content = str(variable_content)
+                    str_content = stringify(variable_content)
                     # Skip ahead if we get the empty string
                     if not str_content:
                         continue
@@ -490,10 +490,11 @@ def render_from_template(
     template: str,
     data: ContextObjT = None,
     partials: t.Optional[t.Dict[str, str]] = None,
+    stringify: t.Callable[[t.Any], str] = str
 ) -> str:
     if partials is not None:
         warnings.warn(
             "Use of partials is experimental and not fully up to spec. Use at your own risk!!"
         )
 
-    return MustacheRenderer.from_template(template, partials).render(data)
+    return MustacheRenderer.from_template(template, partials).render(data, stringify)

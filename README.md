@@ -155,12 +155,12 @@ INSTALL
 
 - with git
 ```
-$ git clone https://github.com/noahmorrison/chevron.git
+$ git clone https://github.com/eliotwrobson/mystace.git
 ```
 
 or using submodules
 ```
-$ git submodules add https://github.com/noahmorrison/chevron.git
+$ git submodules add https://github.com/eliotwrobson/mystace.git
 ```
 
 Also available on pypi!

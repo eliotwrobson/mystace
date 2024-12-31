@@ -8,8 +8,9 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
-A Python implementation of the [{{mustache}}](http://mustache.github.io) templating language. It's compliant with
-the [specifications](https://github.com/mustache/spec) up to v1.4.1.
+A Python implementation of the [{{mustache}}](http://mustache.github.io) templating language.
+Still a _work in progress_, but core rendering features are working (issues are with partials and delimiter
+swap). A spiritual successor to [chevron](https://github.com/noahmorrison/chevron).
 
 Why mystace?
 ------------
@@ -20,16 +21,19 @@ I'm glad you asked!
 
 Included microbenchmarks show mystace heavily outperforming all other libraries tested.
 
-### chevron is *almost* spec compliant ###
+### mystace is *almost* spec compliant ###
 
-Chevron passes nearly all the unit provided by the [spec](https://github.com/mustache/spec) (in every version listed below).
+Mystace passes nearly all the unit provided by the [{{mustache}} spec](https://github.com/mustache/spec).
+To see which tests are currently not passing, see [the spec test file](https://github.com/eliotwrobson/mystace/blob/main/tests/test_specs.py).
+They are only
 
-If you find a test that chevron does not pass, please [report it.](https://github.com/noahmorrison/chevron/issues/new)
+Project status
+------------
+Currently a work in progress. The core rendering logic is solid, but still working out bugs with a few
+test cases. If there is community interest and people will find this useful, I will find time to get
+the rest of test cases working. As is, I am happy to review pull requests and write test cases.
 
-
-
-
-USAGE
+Usage
 -----
 
 Python usage with strings
@@ -39,46 +43,27 @@ import mystace
 mystace.render('Hello, {{ mustache }}!', {'mustache': 'World'})
 ```
 
-Python usage with unpacking
+Python usage with data structure
 ```python
-import chevron
+import mystace
 
-args = {
-  'template': 'Hello, {{ mustache }}!',
+template_str = 'Hello, {{ mustache }}!'
+template_renderer = mystace.MustacheRenderer.from_template(template_str)
 
-  'data': {
-    'mustache': 'World'
-  }
-}
+template_renderer.render({'mustache': 'World'})
 
-chevron.render(**args)
+template_renderer.render({'mustache': 'Dave'})
 ```
 
 INSTALL
 -------
-
-- with git
 ```
-$ git clone https://github.com/eliotwrobson/mystace.git
+$ pip install mystace
 ```
-
-or using submodules
-```
-$ git submodules add https://github.com/eliotwrobson/mystace.git
-```
-
-Also available on pypi!
-
-- with pip
-```
-$ pip install chevron
-```
-
-
 
 TODO
 ---
-
+* get fully spec compliant
 * get popular
 * have people complain
 * fix those complaints

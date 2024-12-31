@@ -20,7 +20,7 @@ I'm glad you asked!
 
 ### mystace is fast ###
 
-Included microbenchmarks show mystace heavily outperforming all other libraries tested.
+Included [microbenchmarks](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml) show mystace heavily outperforming all other libraries tested.
 
 ### mystace is *almost* spec compliant ###
 

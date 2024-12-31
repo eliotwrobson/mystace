@@ -1,6 +1,7 @@
 
 # mystace - A fast, pure Python {{mustache}} renderer
 
+[![PyPI version](https://badge.fury.io/py/mystace.svg)](https://badge.fury.io/py/mystace)
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![tests](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml/badge.svg)](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml)
 [![lint](https://github.com/eliotwrobson/mystace/actions/workflows/lint-python.yml/badge.svg)](https://github.com/eliotwrobson/mystace/actions/workflows/lint-python.yml)
@@ -55,7 +56,7 @@ template_renderer.render({'mustache': 'World'})
 template_renderer.render({'mustache': 'Dave'})
 ```
 
-INSTALL
+Install
 -------
 ```
 $ pip install mystace

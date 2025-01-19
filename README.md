@@ -26,7 +26,6 @@ Included [microbenchmarks](https://github.com/eliotwrobson/mystace/actions/workf
 
 Mystace passes nearly all the unit provided by the [{{mustache}} spec](https://github.com/mustache/spec).
 To see which tests are currently not passing, see [the spec test file](https://github.com/eliotwrobson/mystace/blob/main/tests/test_specs.py).
-They are only
 
 Project status
 ------------

@@ -496,6 +496,20 @@ def test_stringify():
     assert out == expected
 
 
+def test_html_escape():
+    template = "This object is {{object}}."
+    data = {"object": {"string": "value & son"}}
+    expected = "This object is {&quot;string&quot;: &quot;value &amp; son&quot;}."
+
+    def html_escape(s: str) -> str:
+        s = s.replace("&", "&amp;")
+        s = s.replace("'", "&quot;")
+        return s
+
+    out = render_from_template(template, data, html_escape=html_escape)
+    assert out == expected
+
+
 # See also:
 # https://github.com/noahmorrison/chevron/issues/125
 @pytest.mark.xfail

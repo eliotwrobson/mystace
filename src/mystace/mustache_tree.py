@@ -195,7 +195,10 @@ class MustacheRenderer:
             self.partials_dict = {}
 
     def render(
-        self, data: ContextObjT, stringify: t.Callable[[t.Any], str] = str
+        self,
+        data: ContextObjT,
+        stringify: t.Callable[[t.Any], str] = str,
+        html_escape: t.Callable[[str], str] = html_escape,
     ) -> str:
         res_list = []
         starting_context = ContextNode(data)
@@ -493,10 +496,13 @@ def render_from_template(
     data: ContextObjT = None,
     partials: t.Optional[t.Dict[str, str]] = None,
     stringify: t.Callable[[t.Any], str] = str,
+    html_escape: t.Callable[[str], str] = html_escape,
 ) -> str:
     if partials is not None:
         warnings.warn(
             "Use of partials is experimental and not fully up to spec. Use at your own risk!!"
         )
 
-    return MustacheRenderer.from_template(template, partials).render(data, stringify)
+    return MustacheRenderer.from_template(template, partials).render(
+        data, stringify, html_escape
+    )

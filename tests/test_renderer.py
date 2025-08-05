@@ -496,17 +496,17 @@ def test_stringify():
     assert out == expected
 
 
-def test_html_escape():
+def test_html_escape() -> None:
     template = "This object is {{object}}."
     data = {"object": {"string": "value & son"}}
     expected = "This object is {&quot;string&quot;: &quot;value &amp; son&quot;}."
 
-    def html_escape(s: str) -> str:
+    def custom_html_escape(s: str) -> str:
         s = s.replace("&", "&amp;")
         s = s.replace("'", "&quot;")
         return s
 
-    out = render_from_template(template, data, html_escape=html_escape)
+    out = render_from_template(template, data, html_escape_fn=custom_html_escape)
     assert out == expected
 
 

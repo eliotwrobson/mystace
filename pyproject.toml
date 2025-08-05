@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mystace"
-version = "0.1.0"
+version = "0.1.1"
 description = "Rendering mustache templates in Python fast."
 authors = ["Eliot Robson <eliot.robson24@gmail.com>"]
 license = "MIT"

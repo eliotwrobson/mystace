@@ -320,7 +320,7 @@ def test_partial_indentation() -> None:
 # TODO implement this and feed in lambdas test cases.
 def test_indexed() -> None:
     args = {
-        "template": "count {{count.0}}, {{count.1}}, " "{{count.100}}, {{nope.0}}",
+        "template": "count {{count.0}}, {{count.1}}, {{count.100}}, {{nope.0}}",
         "data": {
             "count": [5, 4, 3, 2, 1],
         },

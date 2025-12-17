@@ -202,6 +202,7 @@ class MustacheRenderer:
     ) -> str:
         res_list = []
         starting_context = ContextNode(data)
+        last_was_newline = True  # Track if we're at the start of a line
 
         assert self.mustache_tree.children is not None
 
@@ -216,12 +217,14 @@ class MustacheRenderer:
             # print(curr_node.tag_type)
             if curr_node.tag_type is TagType.LITERAL:
                 res_list.append(curr_node.data)
+                last_was_newline = curr_node.data.endswith("\n")
 
-                # Add offset for partials after newline.
-                # TODO figure out how to get better offset indentation
-                # behavior.
-                if curr_node.data.endswith("\n"):
-                    res_list.append(curr_offset * " ")
+                # Add offset for partials after newline, but only if there's
+                # more content coming at the same offset level
+                if last_was_newline and curr_offset > 0:
+                    # Check if the next node also has the same offset
+                    if work_deque and work_deque[0][2] == curr_offset:
+                        res_list.append(curr_offset * " ")
 
             # TODO combine the cases below
             elif (
@@ -269,8 +272,15 @@ class MustacheRenderer:
                 # TODO add class method that does this assert and yielding
                 assert partial_tree.children is not None
 
+                # For standalone partials, add indentation at the beginning
+                # Only add if we're at the start of a line (last output was newline)
+                if curr_node.offset > 0 and last_was_newline:
+                    res_list.append(curr_node.offset * " ")
+                    last_was_newline = False
+                
+                # Propagate the combined offset through the partial content
                 for child_node in reversed(partial_tree.children):
-                    work_deque.appendleft((child_node, curr_context, curr_node.offset))
+                    work_deque.appendleft((child_node, curr_context, curr_offset + curr_node.offset))
 
         return "".join(res_list)
 

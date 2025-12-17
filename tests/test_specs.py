@@ -17,9 +17,7 @@ from mystace import render_from_template
 # Not a huuuuuge deal, all of the standard failing ones are
 EXPECTED_TO_FAIL = frozenset(
     (
-        "partials - Standalone Without Previous Line",
-        "partials - Standalone Without Newline",
-        "partials - Standalone Indentation",
+        # All partials tests now pass!
     )
 )
 
@@ -53,6 +51,10 @@ def test_spec_from_folder(datadir: Path) -> None:
             did_case_fail = result != test_case["expected"]
 
             if full_test_case_name not in EXPECTED_TO_FAIL:
+                if did_case_fail:
+                    print(f"\nFailed: {full_test_case_name}")
+                    print(f"Expected: {repr(test_case['expected'])}")
+                    print(f"Got:      {repr(result)}")
                 any_fail = any_fail or did_case_fail
             else:
                 assert did_case_fail, full_test_case_name

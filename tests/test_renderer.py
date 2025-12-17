@@ -305,7 +305,7 @@ def test_nest_loops_with_same_key() -> None:
 
 
 # https://github.com/noahmorrison/chevron/issues/49
-# TODO fix partial indentation behavior
+# TODO: Tab indentation needs special handling (tabs are currently treated as single spaces)
 @pytest.mark.xfail
 def test_partial_indentation() -> None:
     args = {"template": "\t{{> count }}", "partials": {"count": "\tone\n\ttwo"}}
@@ -332,23 +332,24 @@ def test_indexed() -> None:
     assert result == expected
 
 
-# TODO enable once I get partials working properly
-# def test_iterator_scope_indentation():
-#     args = {
-#         "data": {
-#             "thing": ["foo", "bar", "baz"],
-#         },
-#         "template": "{{> count }}",
-#         "partials": {
-#             "count": "    {{> iter_scope }}",
-#             "iter_scope": "foobar\n{{#thing}}\n {{.}}\n{{/thing}}",
-#         },
-#     }
+# TODO: Nested partial indentation with sections needs refinement
+@pytest.mark.xfail
+def test_iterator_scope_indentation() -> None:
+    args = {
+        "data": {
+            "thing": ["foo", "bar", "baz"],
+        },
+        "template": "{{> count }}",
+        "partials": {
+            "count": "    {{> iter_scope }}",
+            "iter_scope": "foobar\n{{#thing}}\n {{.}}\n{{/thing}}",
+        },
+    }
 
-#     result = render(**args)
-#     expected = "    foobar\n     foo\n     bar\n     baz\n"
+    result = render_from_template(**args)  # type: ignore
+    expected = "    foobar\n     foo\n     bar\n     baz\n"
 
-#     assert result == expected
+    assert result == expected
 
 
 # https://github.com/noahmorrison/chevron/pull/73

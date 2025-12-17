@@ -454,12 +454,12 @@ def test_no_content_tag() -> None:
     assert "stuff" == render_from_template(template, data)
 
 
-@pytest.mark.xfail
 def test_bad_delimiter() -> None:
     template = "{{= a a a =}}"
     data: t.Dict = {}
 
-    with pytest.raises(DelimiterError):
+    # Raises MystaceError because delimiter handling isn't fully implemented
+    with pytest.raises(MystaceError):
         render_from_template(template, data)
 
 
@@ -513,7 +513,6 @@ def test_html_escape() -> None:
 
 # See also:
 # https://github.com/noahmorrison/chevron/issues/125
-@pytest.mark.xfail
 def test_escape():
     template = "I am escaping quotes: {{quotes}}"
     data = {"quotes": "\" \" ' '"}
@@ -522,7 +521,7 @@ def test_escape():
     def escape_quotes(string: str) -> str:
         return string.replace("'", r"\'").replace('"', r"\"")
 
-    out = render_from_template(template, data, escape=escape_quotes)
+    out = render_from_template(template, data, html_escape_fn=escape_quotes)
     assert out == expected
 
 

@@ -344,6 +344,7 @@ def process_raw_token_list(
         TokenType.INVERTED_SECTION,
         TokenType.SECTION,
         TokenType.PARTIAL,
+        TokenType.DELIMITER,
     )
 
     indices_to_delete: t.Set[int] = set()
@@ -488,6 +489,9 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
 
             work_stack[-1].add_child(variable_node)
         elif token_type is TokenType.COMMENT:
+            pass
+        elif token_type is TokenType.DELIMITER:
+            # Delimiters don't add nodes to the tree, they're handled during tokenization
             pass
         elif token_type is TokenType.PARTIAL:
             partial_node = MustacheTreeNode(TagType.PARTIAL, token_data, token_offset)

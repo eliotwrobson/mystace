@@ -18,7 +18,6 @@ from mystace import render_from_template
 
 # Files with features not yet fully implemented
 EXPECTED_FAIL_FILES = {
-    "delimiters.json",
     "~dynamic-names.json",
     "~inheritance.json",
     "~lambdas.json",

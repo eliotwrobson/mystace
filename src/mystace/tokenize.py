@@ -51,7 +51,7 @@ def mustache_tokenizer(
         # print(cursor_loc, next_tag_loc, next_newline_loc)
         # If we're at the tag location, yield it
         if cursor_loc == next_tag_loc:
-            end_tag_to_search = "}}"
+            end_tag_to_search = end_tag
 
             tag_type_loc = cursor_loc + len(start_tag)
             offset = 1
@@ -82,9 +82,9 @@ def mustache_tokenizer(
             elif text[tag_type_loc] == ">":
                 new_token_type = TokenType.PARTIAL
             elif text[tag_type_loc] == "=":
-                # TODO the delimiter one needs more checks
                 new_token_type = TokenType.DELIMITER
                 end_tag_to_search = end_switch
+                offset = 1
             elif text[tag_type_loc] in ("{", "&"):
                 # TODO maybe need to strip the inner thing more?
                 new_token_type = TokenType.RAW_VARIABLE
@@ -95,7 +95,9 @@ def mustache_tokenizer(
                 new_token_type = TokenType.VARIABLE
                 offset = 0
 
-            end_loc = text.find(end_tag_to_search, cursor_loc)
+            # Search for end tag starting after the start tag and any offset
+            search_start = cursor_loc + len(start_tag) + offset
+            end_loc = text.find(end_tag_to_search, search_start)
 
             if end_loc == -1:
                 raise ex.MystaceError("Tag not closed.")
@@ -108,15 +110,29 @@ def mustache_tokenizer(
                 effective_newline_offset = newline_offset
 
             # yield
+            token_content = text[cursor_loc + len(start_tag) + offset : end_loc].strip()
             res_list.append(
                 TokenTuple(
                     new_token_type,
-                    text[cursor_loc + len(start_tag) + offset : end_loc].strip(),
+                    token_content,
                     effective_newline_offset,
                 )
             )
             cursor_loc = len(end_tag_to_search) + end_loc
             seen_tag_in_current_line = True
+            
+            # Handle delimiter changes
+            if new_token_type == TokenType.DELIMITER:
+                # Parse new delimiters from token content
+                parts = token_content.split()
+                if len(parts) != 2:
+                    raise ex.DelimiterError(
+                        f"Delimiter tag must contain exactly 2 delimiters, got {len(parts)}"
+                    )
+                start_tag, end_tag = parts
+                # Update all the computed end tags
+                end_literal = "}" + end_tag
+                end_switch = "=" + end_tag
             # print(cursor_loc)
 
         # Otherwise, yield the next literal, ending at newlines as-necessary

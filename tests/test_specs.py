@@ -41,7 +41,6 @@ def test_spec_from_folder(datadir: Path) -> None:
                 partials=test_case.get("partials", None),
             )
             did_case_fail = result != test_case["expected"]
-
-            assert did_case_fail, full_test_case_name
+            any_fail = any_fail or did_case_fail
 
     assert not any_fail

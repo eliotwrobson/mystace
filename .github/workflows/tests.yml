@@ -28,10 +28,11 @@ jobs:
         run: uv sync
 
       - name: Run pytest
-        run: uv run pytest --cache-clear --cov
+        run:
+          uv run pytest --cache-clear --cov
           #|
-            #set -o pipefail
-            # | tee pytest-coverage.txt
+          #set -o pipefail
+          # | tee pytest-coverage.txt
       # TODO figure out best way to display coverage
       #- name: Comment coverage
       #  uses: coroo/pytest-coverage-commentator@v1.0.2

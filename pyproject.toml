@@ -54,6 +54,12 @@ include = ["src/mystace/*"]
 # Omit init files
 omit = ["*/__init__.py"]
 
+[tool.coverage.report]
+# Print coverage report to the command line
+show_missing = true
+skip_covered = false
+precision = 2
+
 [tool.mypy]
 python_version = "3.10"
 

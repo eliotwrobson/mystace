@@ -28,11 +28,8 @@ jobs:
         run: uv sync
 
       - name: Run pytest
-        run:
-          uv run pytest --cache-clear --cov
-          #|
-          #set -o pipefail
-          # | tee pytest-coverage.txt
-      # TODO figure out best way to display coverage
-      #- name: Comment coverage
-      #  uses: coroo/pytest-coverage-commentator@v1.0.2
+        run: uv run pytest --cache-clear --cov --cov-report=term --ignore=tests/test_speed.py
+
+      - name: Run speed benchmarks (Python 3.14 only)
+        if: matrix.python-version == '3.14'
+        run: uv run pytest tests/test_speed.py --benchmark-only

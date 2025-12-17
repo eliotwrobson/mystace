@@ -1,27 +1,17 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
-Mustache v1.4 implementation with lambdas.
+Mustache v1.4 implementation.
 
-Usable both in code and as CLI.
-To render a mustache template use `combustache.render`.
-Processed templates are cached; to clear cache use `combustache.cache_clear`.
+To render a mustache template use `mystace.render_from_template`.
+Processed templates are cached via `MustacheRenderer.from_template`.
 
-Typical usage in code: ::
+Typical usage: ::
 
-    >>> import combustache
+    >>> import mystace
     >>> template = 'Hello my name is {{>fancy_name}}!'
     >>> partials = {'fancy_name': '-> {{name}} <-'}
     >>> data = {'name': 'Anahit'}
-    >>> combustache.render(template, data, partials)
+    >>> mystace.render_from_template(template, data, partials)
     'Hello my name is -> Anahit <-!'
-
-Typical usage as CLI: ::
-
-    $ curl https://end.point/v1/api | combustache template.txt -o out.txt
-    $ cat out.txt
-    Hello world!
 """
 
 from mystace.exceptions import (

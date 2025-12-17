@@ -27,12 +27,21 @@ packages = ["src/mystace"]
 
 [dependency-groups]
 dev = [
+  "chevron>=0.14.0",
+  "combustache>=3.0.1",
+  "faker>=39.0.0",
+  "flameprof>=0.4",
+  "icecream>=2.1.8",
+  "moosetash>=1.0.1",
   "mypy>=1.19.1",
+  "pystache>=0.6.8",
   "pytest>=9.0.2",
   "pytest-benchmark>=5.2.3",
   "pytest-cov>=7.0.0",
   "pytest-datadir>=1.8.0",
   "ruff>=0.14.9",
+  "types-chevron>=0.14.2.20250103",
+  "ustache>=0.1.6",
 ]
 
 [tool.pytest.ini_options]

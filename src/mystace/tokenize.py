@@ -120,7 +120,7 @@ def mustache_tokenizer(
             )
             cursor_loc = len(end_tag_to_search) + end_loc
             seen_tag_in_current_line = True
-            
+
             # Handle delimiter changes
             if new_token_type == TokenType.DELIMITER:
                 # Parse new delimiters from token content

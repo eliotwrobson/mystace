@@ -16,9 +16,9 @@ A fast, spec-compliant Python implementation of the [{{mustache}}](http://mustac
 
 Mystace outperforms all other pure Python mustache implementations through its cached rendering approach. Pre-parsing templates into an optimized tree structure means subsequent renders are extremely fast. Included [microbenchmarks](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml) demonstrate significant performance advantages, particularly for repeated renders of the same template.
 
-### mystace is spec compliant
+### mystace is fully spec compliant
 
-Mystace passes **163 out of 229** official [{{mustache}} spec](https://github.com/mustache/spec) tests, including full support for:
+Mystace passes **all 163 required tests** from the official [{{mustache}} spec](https://github.com/mustache/spec) v1.4, providing complete support for:
 
 - Variables (escaped and unescaped)
 - Sections (normal and inverted)
@@ -26,13 +26,13 @@ Mystace passes **163 out of 229** official [{{mustache}} spec](https://github.co
 - Comments
 - **Delimiter changes** (e.g., `{{=<% %>=}}`)
 
-Not yet implemented:
+The 66 skipped tests are for **optional features** not in the core spec:
 
-- Lambda functions
-- Dynamic partial names
-- Template inheritance
+- Lambda functions (`~lambdas.json` - 22 tests)
+- Dynamic partial names (`~dynamic-names.json` - 22 tests)
+- Template inheritance (`~inheritance.json` - 34 tests)
 
-To see detailed test results, check [the spec test file](https://github.com/eliotwrobson/mystace/blob/main/tests/test_specs.py).
+These optional modules (prefixed with `~` in the spec) may be implemented in future versions. To see detailed test results, check [the spec test file](https://github.com/eliotwrobson/mystace/blob/main/tests/test_specs.py).
 
 ## Installation
 

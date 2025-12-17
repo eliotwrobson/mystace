@@ -1,4 +1,3 @@
-
 # mystace - A fast, pure Python {{mustache}} renderer
 
 [![PyPI version](https://badge.fury.io/py/mystace.svg)](https://badge.fury.io/py/mystace)
@@ -9,61 +8,225 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
-A Python implementation of the [{{mustache}}](http://mustache.github.io) templating language.
-Still a _work in progress_, but core rendering features are working (issues are with partials and delimiter
-swap). A spiritual successor to [chevron](https://github.com/noahmorrison/chevron).
+A fast, spec-compliant Python implementation of the [{{mustache}}](http://mustache.github.io) templating language. A spiritual successor to [chevron](https://github.com/noahmorrison/chevron), optimized for performance through caching and efficient rendering.
 
-Why mystace?
-------------
+## Why mystace?
 
-I'm glad you asked!
+### mystace is fast
 
-### mystace is fast ###
+Mystace outperforms all other pure Python mustache implementations through its cached rendering approach. Pre-parsing templates into an optimized tree structure means subsequent renders are extremely fast. Included [microbenchmarks](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml) demonstrate significant performance advantages, particularly for repeated renders of the same template.
 
-Included [microbenchmarks](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml) show mystace heavily outperforming all other libraries tested.
+### mystace is spec compliant
 
-### mystace is *almost* spec compliant ###
+Mystace passes **163 out of 229** official [{{mustache}} spec](https://github.com/mustache/spec) tests, including full support for:
 
-Mystace passes nearly all the unit provided by the [{{mustache}} spec](https://github.com/mustache/spec).
-To see which tests are currently not passing, see [the spec test file](https://github.com/eliotwrobson/mystace/blob/main/tests/test_specs.py).
+- Variables (escaped and unescaped)
+- Sections (normal and inverted)
+- Partials with proper indentation handling
+- Comments
+- **Delimiter changes** (e.g., `{{=<% %>=}}`)
 
-Project status
-------------
-Currently a work in progress. The core rendering logic is solid, but still working out bugs with a few
-test cases. If there is community interest and people will find this useful, I will find time to get
-the rest of test cases working. As is, I am happy to review pull requests and write test cases.
+Not yet implemented:
 
-Usage
------
+- Lambda functions
+- Dynamic partial names
+- Template inheritance
 
-Python usage with strings
+To see detailed test results, check [the spec test file](https://github.com/eliotwrobson/mystace/blob/main/tests/test_specs.py).
+
+## Installation
+
+```bash
+pip install mystace
+```
+
+Requires Python 3.10 or higher.
+
+## Usage
+
+### Basic rendering
+
 ```python
 import mystace
 
-mystace.render('Hello, {{ mustache }}!', {'mustache': 'World'})
+# Simple variable substitution
+result = mystace.render_from_template(
+    'Hello, {{ name }}!',
+    {'name': 'World'}
+)
+# Output: 'Hello, World!'
 ```
 
-Python usage with data structure
+### Cached rendering (recommended for repeated use)
+
+For templates you'll render multiple times, use `MustacheRenderer` to cache the parsed template:
+
 ```python
 import mystace
 
-template_str = 'Hello, {{ mustache }}!'
-template_renderer = mystace.MustacheRenderer.from_template(template_str)
+# Parse template once
+renderer = mystace.MustacheRenderer.from_template('Hello, {{ name }}!')
 
-template_renderer.render({'mustache': 'World'})
-
-template_renderer.render({'mustache': 'Dave'})
+# Render multiple times with different data
+print(renderer.render({'name': 'World'}))  # Hello, World!
+print(renderer.render({'name': 'Alice'}))  # Hello, Alice!
+print(renderer.render({'name': 'Bob'}))    # Hello, Bob!
 ```
 
-Install
--------
-```
-$ pip install mystace
+### Sections
+
+```python
+import mystace
+
+template = '''
+{{#users}}
+  - {{ name }} ({{ email }})
+{{/users}}
+'''
+
+data = {
+    'users': [
+        {'name': 'Alice', 'email': 'alice@example.com'},
+        {'name': 'Bob', 'email': 'bob@example.com'}
+    ]
+}
+
+result = mystace.render_from_template(template, data)
+# Output:
+#   - Alice (alice@example.com)
+#   - Bob (bob@example.com)
 ```
 
-TODO
----
-* get fully spec compliant
-* get popular
-* have people complain
-* fix those complaints
+### Inverted sections
+
+```python
+import mystace
+
+template = '{{^items}}No items found.{{/items}}'
+
+# With empty list
+result = mystace.render_from_template(template, {'items': []})
+# Output: 'No items found.'
+
+# With items
+result = mystace.render_from_template(template, {'items': [1, 2, 3]})
+# Output: ''
+```
+
+### Partials
+
+```python
+import mystace
+
+template = '{{>header}}Content here{{>footer}}'
+
+partials = {
+    'header': '<header>{{title}}</header>',
+    'footer': '<footer>© 2025</footer>'
+}
+
+result = mystace.render_from_template(
+    template,
+    {'title': 'My Page'},
+    partials=partials
+)
+# Output: '<header>My Page</header>Content here<footer>© 2025</footer>'
+```
+
+### Delimiter changes
+
+```python
+import mystace
+
+# Change delimiters to avoid conflicts
+template = '''
+{{=<% %>=}}
+<script>
+  const data = <% data %>;
+</script>
+'''
+
+result = mystace.render_from_template(template, {'data': '{"key": "value"}'})
+# Output:
+# <script>
+#   const data = {"key": "value"};
+# </script>
+```
+
+### Custom escaping and stringification
+
+```python
+import mystace
+
+# Custom HTML escaping
+def my_escape(text):
+    return text.replace('&', '&amp;').replace('<', '&lt;')
+
+result = mystace.render_from_template(
+    '{{ html }}',
+    {'html': '<div>Hello</div>'},
+    html_escape_fn=my_escape
+)
+
+# Custom stringification for non-string values
+def my_stringify(value):
+    if isinstance(value, bool):
+        return str(value).lower()
+    return str(value)
+
+result = mystace.render_from_template(
+    'Value: {{ flag }}',
+    {'flag': True},
+    stringify=my_stringify
+)
+# Output: 'Value: true'
+```
+
+## Development
+
+This project uses [uv](https://github.com/astral-sh/uv) for dependency management:
+
+```bash
+# Install dependencies
+uv sync
+
+# Run tests
+uv run pytest tests/
+
+# Run tests with coverage
+uv run pytest tests/ --cov=src/mystace --cov-report=term --ignore=tests/test_speed.py
+
+# Run benchmarks (Python 3.14 only)
+uv run pytest tests/test_speed.py --benchmark-only
+
+# Format code
+uv run ruff format
+
+# Type checking
+uv run mypy src/
+```
+
+## Performance
+
+Mystace is designed for speed through:
+
+- **Pre-parsed templates**: Parse once, render many times with `MustacheRenderer`
+- **Efficient tree structure**: Optimized internal representation
+- **Minimal overhead**: Pure Python with no unnecessary allocations
+
+Benchmark results show mystace as the fastest pure Python mustache implementation, particularly excelling at repeated renders of the same template.
+
+## Contributing
+
+Contributions are welcome! Areas for improvement:
+
+- Lambda function support
+- Dynamic partial names
+- Template inheritance
+- Additional optimization
+
+## TODO
+
+- Implement remaining spec features (lambdas, dynamic names, inheritance)
+- Further performance optimizations
+- Additional documentation and examples

@@ -21,9 +21,9 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "cSpell.words": [
-    "datadir",
+    "datadir"
   ],
   "python-envs.defaultEnvManager": "ms-python.python:conda",
   "python-envs.defaultPackageManager": "ms-python.python:conda",
-  "python-envs.pythonProjects": [],
+  "python-envs.pythonProjects": []
 }

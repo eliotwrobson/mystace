@@ -1,7 +1,7 @@
 # mystace - A fast, pure Python {{mustache}} renderer
 
 [![PyPI version](https://badge.fury.io/py/mystace.svg)](https://badge.fury.io/py/mystace)
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![tests](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml/badge.svg)](https://github.com/eliotwrobson/mystace/actions/workflows/tests.yml)
 [![lint](https://github.com/eliotwrobson/mystace/actions/workflows/lint-python.yml/badge.svg)](https://github.com/eliotwrobson/mystace/actions/workflows/lint-python.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,7 +18,7 @@ Mystace outperforms all other pure Python mustache implementations through its c
 
 ### mystace is fully spec compliant
 
-Mystace passes **all 163 required tests** from the official [{{mustache}} spec](https://github.com/mustache/spec) v1.4, providing complete support for:
+Mystace passes **all 163 required tests** from the official [{{mustache}} spec](https://github.com/mustache/spec) v1.4.3, providing complete support for:
 
 - Variables (escaped and unescaped)
 - Sections (normal and inverted)

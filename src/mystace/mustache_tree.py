@@ -277,10 +277,12 @@ class MustacheRenderer:
                 if curr_node.offset > 0 and last_was_newline:
                     res_list.append(curr_node.offset * " ")
                     last_was_newline = False
-                
+
                 # Propagate the combined offset through the partial content
                 for child_node in reversed(partial_tree.children):
-                    work_deque.appendleft((child_node, curr_context, curr_offset + curr_node.offset))
+                    work_deque.appendleft(
+                        (child_node, curr_context, curr_offset + curr_node.offset)
+                    )
 
         return "".join(res_list)
 

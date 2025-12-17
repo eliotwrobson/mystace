@@ -6,10 +6,7 @@ authors = [{ name = "Eliot Robson", email = "eliot.robson24@gmail.com" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "more-itertools>=8",
-    "typing-extensions>=4.15.0",
-]
+dependencies = ["more-itertools>=8", "typing-extensions>=4.15.0"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "License :: OSI Approved :: MIT License",
@@ -30,10 +27,10 @@ packages = ["src/mystace"]
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.2",
-    "pytest-benchmark>=5.2.3",
-    "pytest-cov>=7.0.0",
-    "pytest-datadir>=1.8.0",
+  "pytest>=9.0.2",
+  "pytest-benchmark>=5.2.3",
+  "pytest-cov>=7.0.0",
+  "pytest-datadir>=1.8.0",
 ]
 
 [tool.pytest.ini_options]

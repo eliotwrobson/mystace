@@ -13,14 +13,6 @@ from pathlib import Path
 
 from mystace import render_from_template
 
-# Names of tests to skip for now that fail, TODO debug these.
-# Not a huuuuuge deal, all of the standard failing ones are
-EXPECTED_TO_FAIL = frozenset(
-    (
-        # All partials tests now pass!
-    )
-)
-
 
 def test_spec_from_folder(datadir: Path) -> None:
     # TODO get a cleaner way of parameterizing these

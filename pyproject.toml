@@ -1,6 +1,6 @@
 [project]
 name = "mystace"
-version = "0.1.1"
+dynamic = ["version"]
 description = "Rendering mustache templates in Python fast."
 authors = [{ name = "Eliot Robson", email = "eliot.robson24@gmail.com" }]
 license = { text = "MIT" }
@@ -19,8 +19,14 @@ classifiers = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/mystace/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mystace"]

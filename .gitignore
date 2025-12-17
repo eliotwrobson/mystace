@@ -36,3 +36,5 @@ pip-log.txt
 # Profiling / flamegraphs
 cprofile_stats
 
+# Auto-generated version file
+src/mystace/_version.py

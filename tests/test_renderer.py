@@ -4,7 +4,6 @@ import typing as t
 import pytest
 
 from mystace import (
-    DelimiterError,
     MissingClosingTagError,
     MystaceError,
     StrayClosingTagError,

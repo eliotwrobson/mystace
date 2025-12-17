@@ -8,7 +8,6 @@ import os
 import random
 import string
 import subprocess
-import sys
 import typing as t
 import warnings
 
@@ -297,23 +296,14 @@ def generate_test_case_random(seed: int) -> TestCaseGeneratorT:
     return _generate
 
 
-@pytest.mark.skipif(
-    sys.version_info <= (3, 10), reason="Requires latest versions of Python."
-)
-@pytest.mark.parametrize("render_function_name", t.get_args(RenderFunctionT))
-@pytest.mark.parametrize(
-    "test_case_generator",
-    [generate_test_case_nested, generate_test_case_long, generate_test_case_random(1)],
-)
-def test_large(
+def _run_benchmark(
     render_function_name: RenderFunctionT,
     test_case_generator: TestCaseGeneratorT,
+    n: int,
     benchmark: t.Any,
     request: t.Any,
 ) -> None:
-    # TODO turn up the test case size later.
-    n = 1_000
-
+    """Shared benchmark implementation for all test cases."""
     template, names = test_case_generator(n)  # type: ignore
 
     if render_function_name == "mystace":
@@ -372,3 +362,27 @@ def test_large(
         warnings.warn(
             UserWarning(f"{request.node.name} benchmark raised an exception!!")
         )
+
+
+@pytest.mark.parametrize(
+    "test_case_generator",
+    [
+        generate_test_case_nested,
+        generate_test_case_long,
+        generate_test_case_random(1),
+    ],
+)
+@pytest.mark.parametrize("render_function_name", t.get_args(RenderFunctionT))
+def test_large(
+    render_function_name: RenderFunctionT,
+    test_case_generator: TestCaseGeneratorT,
+    benchmark: t.Any,
+    request: t.Any,
+) -> None:
+    """Benchmark large templates across different test case generators."""
+    n = 1_000
+
+    # Set benchmark group based on test case generator name
+    benchmark.group = test_case_generator.__name__.replace("generate_test_case_", "")
+
+    _run_benchmark(render_function_name, test_case_generator, n, benchmark, request)

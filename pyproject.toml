@@ -27,10 +27,12 @@ packages = ["src/mystace"]
 
 [dependency-groups]
 dev = [
+  "mypy>=1.19.1",
   "pytest>=9.0.2",
   "pytest-benchmark>=5.2.3",
   "pytest-cov>=7.0.0",
   "pytest-datadir>=1.8.0",
+  "ruff>=0.14.9",
 ]
 
 [tool.pytest.ini_options]
@@ -44,7 +46,7 @@ include = ["src/mystace/*"]
 omit = ["*/__init__.py"]
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 
 [[tool.mypy.overrides]]
 module = ["yaml", "combustache.*", "pystache.*", "ustache.*"]

@@ -24,7 +24,7 @@ Mystace passes **all 163 required tests** from the official [{{mustache}} spec](
 - Sections (normal and inverted)
 - Partials with proper indentation handling
 - Comments
-- **Delimiter changes** (e.g., `{{=<% %>=}}`)
+- Delimiter changes (e.g., `{{=<% %>=}}`)
 
 The 66 skipped tests are for **optional features** not in the core spec:
 

@@ -366,7 +366,7 @@ def process_raw_token_list(
                 if double_prev_type is TokenType.LITERAL:
                     double_prev_is_space = double_prev_data.isspace()
                     double_prev_ends_newline = double_prev_data.endswith("\n")
-                    
+
                     if len(res_token_list) == 2:
                         remove_double_prev = (
                             double_prev_is_space and not double_prev_ends_newline
@@ -378,7 +378,7 @@ def process_raw_token_list(
                     else:
                         triple_prev_type, triple_prev_data, _ = res_token_list[-3]
                         triple_prev_ends_newline = triple_prev_data.endswith("\n")
-                        
+
                         remove_double_prev = (
                             double_prev_is_space
                             and not double_prev_ends_newline

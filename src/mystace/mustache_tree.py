@@ -18,6 +18,16 @@ from .util import html_escape
 # be returned
 ContextObjT = t.Any
 
+# Tokens that can appear standalone on a line (for whitespace removal)
+_STANDALONE_TOKENS = (
+    TokenType.COMMENT,
+    TokenType.END_SECTION,
+    TokenType.INVERTED_SECTION,
+    TokenType.SECTION,
+    TokenType.PARTIAL,
+    TokenType.DELIMITER,
+)
+
 
 class ContextNode:
     __slots__ = ("context", "parent_context_node")
@@ -303,11 +313,7 @@ def handle_final_line_clear(
     token_list: t.List, target_tokens: t.Tuple[TokenType, ...]
 ) -> None:
     if len(token_list) >= 2 and token_list[-1][0] in target_tokens:
-        (
-            prev_type,
-            prev_data,
-            prev_offset,
-        ) = token_list[-2]
+        prev_type, prev_data, _ = token_list[-2]
 
         # Prev token is a whitespace literal we can possibly delete
         if (
@@ -320,7 +326,7 @@ def handle_final_line_clear(
                 token_list.pop(-2)
                 return
 
-            skip_prev_type, skip_prev_data, skip_prev_offset = token_list[-3]
+            skip_prev_type, skip_prev_data, _ = token_list[-3]
 
             if skip_prev_type is TokenType.LITERAL and skip_prev_data.endswith("\n"):
                 token_list.pop(-2)
@@ -329,15 +335,6 @@ def handle_final_line_clear(
 def process_raw_token_list(
     raw_token_list: t.List[TokenTuple],
 ) -> t.List[TokenTuple]:
-    TARGET_TOKENS = (
-        TokenType.COMMENT,
-        TokenType.END_SECTION,
-        TokenType.INVERTED_SECTION,
-        TokenType.SECTION,
-        TokenType.PARTIAL,
-        TokenType.DELIMITER,
-    )
-
     indices_to_delete: t.Set[int] = set()
     res_token_list: t.List[TokenTuple] = []
     for i, token in enumerate(raw_token_list):
@@ -350,7 +347,7 @@ def process_raw_token_list(
         )
 
         prev_token_can_skip = (
-            len(res_token_list) >= 1 and res_token_list[-1][0] in TARGET_TOKENS
+            len(res_token_list) >= 1 and res_token_list[-1][0] in _STANDALONE_TOKENS
         )
 
         remove_double_prev = False
@@ -364,36 +361,35 @@ def process_raw_token_list(
             # If the spaces behind the tag are a whitespace-only literal that
             # doesn't start a new line, get rid of it
             elif len(res_token_list) >= 2:
-                double_prev_type, double_prev_data, double_prev_offset = res_token_list[
-                    -2
-                ]
+                double_prev_type, double_prev_data, _ = res_token_list[-2]
 
                 if double_prev_type is TokenType.LITERAL:
+                    double_prev_is_space = double_prev_data.isspace()
+                    double_prev_ends_newline = double_prev_data.endswith("\n")
+                    
                     if len(res_token_list) == 2:
                         remove_double_prev = (
-                            double_prev_data.isspace()
-                            and not double_prev_data.endswith("\n")
+                            double_prev_is_space and not double_prev_ends_newline
                         )
 
                         double_prev_can_skip = (
-                            double_prev_data.isspace()
-                            or double_prev_data.endswith("\n")
+                            double_prev_is_space or double_prev_ends_newline
                         )
                     else:
-                        triple_prev_type, triple_prev_data, triple_prev_offset = (
-                            res_token_list[-3]
-                        )
+                        triple_prev_type, triple_prev_data, _ = res_token_list[-3]
+                        triple_prev_ends_newline = triple_prev_data.endswith("\n")
+                        
                         remove_double_prev = (
-                            double_prev_data.isspace()
-                            and not double_prev_data.endswith("\n")
+                            double_prev_is_space
+                            and not double_prev_ends_newline
                             and triple_prev_type is TokenType.LITERAL
-                            and triple_prev_data.endswith("\n")
+                            and triple_prev_ends_newline
                         )
 
-                        double_prev_can_skip = double_prev_data.endswith("\n") or (
-                            double_prev_data.isspace()
+                        double_prev_can_skip = double_prev_ends_newline or (
+                            double_prev_is_space
                             and triple_prev_type is TokenType.LITERAL
-                            and triple_prev_data.endswith("\n")
+                            and triple_prev_ends_newline
                         )
 
             else:
@@ -408,7 +404,7 @@ def process_raw_token_list(
 
         res_token_list.append(token)
 
-    handle_final_line_clear(res_token_list, TARGET_TOKENS)
+    handle_final_line_clear(res_token_list, _STANDALONE_TOKENS)
     # Don't require a trailing newline to remove leading whitespace.
 
     res_token_list = [

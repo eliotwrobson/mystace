@@ -15,8 +15,6 @@ class TokenType(Enum):
     VARIABLE = 8
     LITERAL = 9
 
-    # TODO get rid of this funciton. I think this was only needed
-    # if these were getting inserted into a heap, but they are not now.
     def __lt__(self, other: t.Any) -> bool:
         """
         From: https://stackoverflow.com/a/39269589
@@ -48,15 +46,12 @@ def mustache_tokenizer(
 
     while cursor_loc < len(text):
         next_tag_loc = text.find(start_tag, cursor_loc)
-        # print(cursor_loc, next_tag_loc, next_newline_loc)
         # If we're at the tag location, yield it
         if cursor_loc == next_tag_loc:
             end_tag_to_search = end_tag
 
             tag_type_loc = cursor_loc + len(start_tag)
             offset = 1
-            # print(len(start_tag))
-            # print(str(text_bytes)[tag_type_loc], text_bytes[tag_type_loc], ord(b"#"))
             # '!': 'comment',
             # '#': 'section',
             # '^': 'inverted section',
@@ -65,11 +60,7 @@ def mustache_tokenizer(
             # '=': 'set delimiter?',
             # '{': 'no escape?',
             # '&': 'no escape'
-            # TODO do we want to render the empty string key for the
-            # open brackets? We can probably revert to normal chevron
-            # behavior in this case instead oft supporting this case.
             if tag_type_loc >= len(text):
-                # TODO give a better error message.
                 raise ex.MystaceError("Tag not closed.")
             elif text[tag_type_loc] == "!":
                 new_token_type = TokenType.COMMENT
@@ -86,7 +77,6 @@ def mustache_tokenizer(
                 end_tag_to_search = end_switch
                 offset = 1
             elif text[tag_type_loc] in ("{", "&"):
-                # TODO maybe need to strip the inner thing more?
                 new_token_type = TokenType.RAW_VARIABLE
                 if text[tag_type_loc] == "{":
                     end_tag_to_search = end_literal
@@ -133,7 +123,6 @@ def mustache_tokenizer(
                 # Update all the computed end tags
                 end_literal = "}" + end_tag
                 end_switch = "=" + end_tag
-            # print(cursor_loc)
 
         # Otherwise, yield the next literal, ending at newlines as-necessary
         else:
@@ -157,5 +146,4 @@ def mustache_tokenizer(
                 newline_offset += len(literal_text)
 
             cursor_loc = next_literal_end
-    # print(res_list)
     return res_list

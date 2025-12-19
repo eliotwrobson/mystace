@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import enum
 import typing as t
-import warnings
 from collections import deque
 
 import typing_extensions as te
@@ -211,10 +210,8 @@ class MustacheRenderer:
             (node, starting_context, self.mustache_tree.offset)
             for node in self.mustache_tree.children
         )
-        # print(context)
         while work_deque:
             curr_node, curr_context, curr_offset = work_deque.popleft()
-            # print(curr_node.tag_type)
             if curr_node.tag_type is TagType.LITERAL:
                 res_list.append(curr_node.data)
                 last_was_newline = curr_node.data.endswith("\n")
@@ -226,13 +223,11 @@ class MustacheRenderer:
                     if work_deque and work_deque[0][2] == curr_offset:
                         res_list.append(curr_offset * " ")
 
-            # TODO combine the cases below
             elif (
                 curr_node.tag_type is TagType.VARIABLE
                 or curr_node.tag_type is TagType.VARIABLE_RAW
             ):
                 variable_content = curr_context.get(curr_node.data)
-                # print(repr(curr_node.data), curr_context.context)
                 if variable_content is not None:
                     str_content = stringify(variable_content)
                     # Skip ahead if we get the empty string
@@ -269,7 +264,6 @@ class MustacheRenderer:
                 if partial_tree is None:
                     continue
 
-                # TODO add class method that does this assert and yielding
                 assert partial_tree.children is not None
 
                 # For standalone partials, add indentation at the beginning
@@ -335,9 +329,6 @@ def handle_final_line_clear(
 def process_raw_token_list(
     raw_token_list: t.List[TokenTuple],
 ) -> t.List[TokenTuple]:
-    # TODO I think this function can be simplified with a mark and remove algorithm,
-    # avoids edge cases related to going through on a single pass.
-
     TARGET_TOKENS = (
         TokenType.COMMENT,
         TokenType.END_SECTION,
@@ -349,12 +340,9 @@ def process_raw_token_list(
 
     indices_to_delete: t.Set[int] = set()
     res_token_list: t.List[TokenTuple] = []
-    # TODO do token whitespace processing and partial replacement here.
     for i, token in enumerate(raw_token_list):
         token_type, token_data, token_offset = token
 
-        # TODO to actually do this, we need to know whether this token is the start of a line and not something
-        # coming after a tag
         curr_token_can_skip = (
             token_type is TokenType.LITERAL
             and token_data.isspace()
@@ -366,20 +354,12 @@ def process_raw_token_list(
         )
 
         remove_double_prev = False
-        # TODO later on, this condition needs to be based on whether there are other tags on this
-        # line. Refactor once the line offset of each literal gets recorded, needed for partial
-        # evaluation
         double_prev_can_skip = False
-
-        # print(token_type, repr(token_data))
-        # print(curr_token_can_skip, prev_token_can_skip)
-        # print(res_token_list)
 
         # If the current token is a whitespace literal going onto the next line, and
         # the previous token is a token that should be on a standalone line.
         if curr_token_can_skip and prev_token_can_skip:
             if len(res_token_list) == 1:
-                # print("HREE")
                 double_prev_can_skip = True
             # If the spaces behind the tag are a whitespace-only literal that
             # doesn't start a new line, get rid of it
@@ -400,11 +380,9 @@ def process_raw_token_list(
                             or double_prev_data.endswith("\n")
                         )
                     else:
-                        # print("TRIPLE PREV CASE")
                         triple_prev_type, triple_prev_data, triple_prev_offset = (
                             res_token_list[-3]
                         )
-                        # print(triple_prev_type, triple_prev_data)
                         remove_double_prev = (
                             double_prev_data.isspace()
                             and not double_prev_data.endswith("\n")
@@ -423,19 +401,14 @@ def process_raw_token_list(
 
         # If we skip inserting the current token, try popping the one two tokens
         # ago if needed
-        # print(token, double_prev_can_skip, prev_token_can_skip, curr_token_can_skip)
         if double_prev_can_skip and prev_token_can_skip and curr_token_can_skip:
             indices_to_delete.add(i)
             if remove_double_prev:
                 indices_to_delete.add(i - 2)
-                # res_token_list.pop(-2)
 
         res_token_list.append(token)
-        # print()
 
     handle_final_line_clear(res_token_list, TARGET_TOKENS)
-
-    # print(res_token_list)
     # Don't require a trailing newline to remove leading whitespace.
 
     res_token_list = [
@@ -446,12 +419,10 @@ def process_raw_token_list(
 
 
 def create_mustache_tree(thing: str) -> MustacheTreeNode:
-    # TODO make a special tag type for the root? Unsure
     root = MustacheTreeNode(TagType.ROOT, "", 0)
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
     raw_token_list = mustache_tokenizer(thing)
     token_list = process_raw_token_list(raw_token_list)
-    # print(token_list)
     for token_type, token_data, token_offset in token_list:
         # token_data = token_data.decode("utf-8")
         if token_type is TokenType.LITERAL:
@@ -497,8 +468,6 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             partial_node = MustacheTreeNode(TagType.PARTIAL, token_data, token_offset)
             work_stack[-1].add_child(partial_node)
         else:
-            # print(token_type, token_data)
-            # assert_never(token_type)
             raise MystaceError
 
     if work_stack[-1].tag_type is not TagType.ROOT:
@@ -514,11 +483,6 @@ def render_from_template(
     stringify: t.Callable[[t.Any], str] = str,
     html_escape_fn: t.Callable[[str], str] = html_escape,
 ) -> str:
-    if partials is not None:
-        warnings.warn(
-            "Use of partials is experimental and not fully up to spec. Use at your own risk!!"
-        )
-
     return MustacheRenderer.from_template(template, partials).render(
         data, stringify, html_escape_fn
     )

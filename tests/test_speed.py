@@ -39,6 +39,24 @@ def generate_test_case_long(n: int) -> TestCaseT:
     return template, names
 
 
+def generate_test_case_simple_variables(n: int) -> TestCaseT:
+    """Simple test case with just variable substitutions."""
+    template = " ".join(f"{{{{var{i}}}}}" for i in range(n))
+    data = {f"var{i}": f"value{i}" for i in range(n)}
+    return template, data
+
+
+def generate_test_case_simple_sections(n: int) -> TestCaseT:
+    """Simple test case with basic sections."""
+    template = ""
+    data = {}
+    for i in range(n):
+        section_name = f"section{i}"
+        template += f"{{{{#{section_name}}}}}content{{{{/{section_name}}}}}"
+        data[section_name] = True
+    return template, data
+
+
 def generate_test_case_nested(n: int) -> TestCaseT:
     fake = Faker()
 
@@ -333,6 +351,8 @@ def _run_benchmark(
     elif render_function_name == "mstache":
         import mstache
 
+        # mstache.render() uses a default LRU cache for tokenization
+        # so repeated calls benefit from caching automatically
         render_function = mstache.render
     else:
         assert_never(render_function_name)
@@ -364,6 +384,8 @@ def _run_benchmark(
         generate_test_case_nested,
         generate_test_case_long,
         generate_test_case_random(1),
+        generate_test_case_simple_variables,
+        generate_test_case_simple_sections,
     ],
 )
 @pytest.mark.parametrize("render_function_name", t.get_args(RenderFunctionT))

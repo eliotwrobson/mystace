@@ -57,12 +57,12 @@ class ContextNode:
         if key == ".":
             return self.context
 
-        # Split only once and cache
-        keys = key.split(".")
+        # Use iterator to avoid copying keys
+        chain_iter = iter(key.split("."))
         curr_ctx = self.context
         parent_node = self.parent_context_node
 
-        first_key = keys[0]
+        first_key = next(chain_iter)
 
         # TODO I think this is where changes need to be made if we want to
         # support indexing and lambdas.
@@ -83,7 +83,7 @@ class ContextNode:
             return None
 
         # Loop through the rest
-        for key in keys[1:]:
+        for key in chain_iter:
             if isinstance(outer_context, list):
                 try:
                     int_key = int(key)

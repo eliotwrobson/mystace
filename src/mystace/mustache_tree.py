@@ -346,6 +346,8 @@ def process_raw_token_list(
 ) -> t.List[TokenTuple]:
     indices_to_delete: t.Set[int] = set()
     res_token_list: t.List[TokenTuple] = []
+    res_token_list_append = res_token_list.append  # Cache method lookup
+    
     for i, token in enumerate(raw_token_list):
         token_type, token_data, token_offset = token
 
@@ -411,14 +413,16 @@ def process_raw_token_list(
             if remove_double_prev:
                 indices_to_delete.add(i - 2)
 
-        res_token_list.append(token)
+        res_token_list_append(token)
 
     handle_final_line_clear(res_token_list, _STANDALONE_TOKENS)
     # Don't require a trailing newline to remove leading whitespace.
 
-    res_token_list = [
-        elem for i, elem in enumerate(res_token_list) if i not in indices_to_delete
-    ]
+    # Only filter if we have deletions to avoid unnecessary list creation
+    if indices_to_delete:
+        res_token_list = [
+            elem for i, elem in enumerate(res_token_list) if i not in indices_to_delete
+        ]
 
     return res_token_list
 
@@ -426,52 +430,61 @@ def process_raw_token_list(
 def create_mustache_tree(thing: str) -> MustacheTreeNode:
     root = MustacheTreeNode(TagType.ROOT, "", 0)
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
+    work_stack_append = work_stack.append  # Cache method lookup
+    work_stack_pop = work_stack.pop  # Cache method lookup
+    
     raw_token_list = mustache_tokenizer(thing)
     token_list = process_raw_token_list(raw_token_list)
+    
+    # Pre-compute type checks for faster branching
+    TOKEN_LITERAL = TokenType.LITERAL
+    TOKEN_SECTION = TokenType.SECTION
+    TOKEN_INVERTED_SECTION = TokenType.INVERTED_SECTION
+    TOKEN_END_SECTION = TokenType.END_SECTION
+    TOKEN_VARIABLE = TokenType.VARIABLE
+    TOKEN_RAW_VARIABLE = TokenType.RAW_VARIABLE
+    TOKEN_COMMENT = TokenType.COMMENT
+    TOKEN_DELIMITER = TokenType.DELIMITER
+    TOKEN_PARTIAL = TokenType.PARTIAL
+    
+    TAG_SECTION = TagType.SECTION
+    TAG_INVERTED_SECTION = TagType.INVERTED_SECTION
+    TAG_VARIABLE = TagType.VARIABLE
+    TAG_VARIABLE_RAW = TagType.VARIABLE_RAW
+    TAG_LITERAL = TagType.LITERAL
+    TAG_PARTIAL = TagType.PARTIAL
+    
     for token_type, token_data, token_offset in token_list:
-        # token_data = token_data.decode("utf-8")
-        if token_type is TokenType.LITERAL:
-            literal_node = MustacheTreeNode(TagType.LITERAL, token_data, token_offset)
-            work_stack[-1].add_child(literal_node)
-
-        elif token_type in [TokenType.SECTION, TokenType.INVERTED_SECTION]:
-            tag_type = (
-                TagType.SECTION
-                if token_type is TokenType.SECTION
-                else TagType.INVERTED_SECTION
+        if token_type is TOKEN_LITERAL:
+            work_stack[-1].add_child(
+                MustacheTreeNode(TAG_LITERAL, token_data, token_offset)
             )
+
+        elif token_type is TOKEN_SECTION or token_type is TOKEN_INVERTED_SECTION:
+            tag_type = TAG_SECTION if token_type is TOKEN_SECTION else TAG_INVERTED_SECTION
             section_node = MustacheTreeNode(tag_type, token_data, token_offset)
-            # Add section to list of children
             work_stack[-1].add_child(section_node)
+            work_stack_append(section_node)
 
-            # Add section to work stack and descend in on the next iteration.
-            work_stack.append(section_node)
-
-        elif token_type is TokenType.END_SECTION:
+        elif token_type is TOKEN_END_SECTION:
             if work_stack[-1].data != token_data:
                 raise StrayClosingTagError(f'Opening tag for "{token_data}" not found.')
+            work_stack_pop()
 
-            # Close the current section by popping off the end of the work stack.
-            work_stack.pop()
-
-        elif token_type in [TokenType.VARIABLE, TokenType.RAW_VARIABLE]:
-            tag_type = (
-                TagType.VARIABLE
-                if token_type is TokenType.VARIABLE
-                else TagType.VARIABLE_RAW
+        elif token_type is TOKEN_VARIABLE or token_type is TOKEN_RAW_VARIABLE:
+            tag_type = TAG_VARIABLE if token_type is TOKEN_VARIABLE else TAG_VARIABLE_RAW
+            work_stack[-1].add_child(
+                MustacheTreeNode(tag_type, token_data, token_offset)
             )
-            variable_node = MustacheTreeNode(tag_type, token_data, token_offset)
-            # Add section to list of children
-
-            work_stack[-1].add_child(variable_node)
-        elif token_type is TokenType.COMMENT:
+            
+        elif token_type is TOKEN_COMMENT or token_type is TOKEN_DELIMITER:
+            # Comments and delimiters don't add nodes to the tree
             pass
-        elif token_type is TokenType.DELIMITER:
-            # Delimiters don't add nodes to the tree, they're handled during tokenization
-            pass
-        elif token_type is TokenType.PARTIAL:
-            partial_node = MustacheTreeNode(TagType.PARTIAL, token_data, token_offset)
-            work_stack[-1].add_child(partial_node)
+            
+        elif token_type is TOKEN_PARTIAL:
+            work_stack[-1].add_child(
+                MustacheTreeNode(TAG_PARTIAL, token_data, token_offset)
+            )
         else:
             raise MystaceError
 

@@ -46,17 +46,6 @@ def mustache_tokenizer(
     newline_offset = 0
     seen_tag_in_current_line = False
 
-    # Pre-compute TokenTypes to avoid enum lookups
-    TOKEN_COMMENT = TokenType.COMMENT
-    TOKEN_SECTION = TokenType.SECTION
-    TOKEN_INVERTED_SECTION = TokenType.INVERTED_SECTION
-    TOKEN_END_SECTION = TokenType.END_SECTION
-    TOKEN_PARTIAL = TokenType.PARTIAL
-    TOKEN_DELIMITER = TokenType.DELIMITER
-    TOKEN_RAW_VARIABLE = TokenType.RAW_VARIABLE
-    TOKEN_VARIABLE = TokenType.VARIABLE
-    TOKEN_LITERAL = TokenType.LITERAL
-
     while cursor_loc < text_len:
         next_tag_loc = text.find(start_tag, cursor_loc)
         # If we're at the tag location, yield it
@@ -78,26 +67,26 @@ def mustache_tokenizer(
 
             char = text[tag_type_loc]
             if char == "!":
-                new_token_type = TOKEN_COMMENT
+                new_token_type = TokenType.COMMENT
             elif char == "#":
-                new_token_type = TOKEN_SECTION
+                new_token_type = TokenType.SECTION
             elif char == "^":
-                new_token_type = TOKEN_INVERTED_SECTION
+                new_token_type = TokenType.INVERTED_SECTION
             elif char == "/":
-                new_token_type = TOKEN_END_SECTION
+                new_token_type = TokenType.END_SECTION
             elif char == ">":
-                new_token_type = TOKEN_PARTIAL
+                new_token_type = TokenType.PARTIAL
             elif char == "=":
-                new_token_type = TOKEN_DELIMITER
+                new_token_type = TokenType.DELIMITER
                 end_tag_to_search = end_switch
                 offset = 1
             elif char == "{" or char == "&":
-                new_token_type = TOKEN_RAW_VARIABLE
+                new_token_type = TokenType.RAW_VARIABLE
                 if char == "{":
                     end_tag_to_search = end_literal
             else:
                 # Just a variable
-                new_token_type = TOKEN_VARIABLE
+                new_token_type = TokenType.VARIABLE
                 offset = 0
 
             # Search for end tag starting after the start tag and any offset
@@ -124,7 +113,7 @@ def mustache_tokenizer(
             seen_tag_in_current_line = True
 
             # Handle delimiter changes
-            if new_token_type == TOKEN_DELIMITER:
+            if new_token_type == TokenType.DELIMITER:
                 # Parse new delimiters from token content
                 parts = token_content.split()
                 if len(parts) != 2:
@@ -150,7 +139,7 @@ def mustache_tokenizer(
 
             literal_text = text[cursor_loc:next_literal_end]
 
-            res_list_append(TokenTuple(TOKEN_LITERAL, literal_text, newline_offset))
+            res_list_append(TokenTuple(TokenType.LITERAL, literal_text, newline_offset))
 
             if literal_text.endswith("\n"):
                 newline_offset = 0

@@ -436,58 +436,44 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     raw_token_list = mustache_tokenizer(thing)
     token_list = process_raw_token_list(raw_token_list)
 
-    # Pre-compute type checks for faster branching
-    TOKEN_LITERAL = TokenType.LITERAL
-    TOKEN_SECTION = TokenType.SECTION
-    TOKEN_INVERTED_SECTION = TokenType.INVERTED_SECTION
-    TOKEN_END_SECTION = TokenType.END_SECTION
-    TOKEN_VARIABLE = TokenType.VARIABLE
-    TOKEN_RAW_VARIABLE = TokenType.RAW_VARIABLE
-    TOKEN_COMMENT = TokenType.COMMENT
-    TOKEN_DELIMITER = TokenType.DELIMITER
-    TOKEN_PARTIAL = TokenType.PARTIAL
-
-    TAG_SECTION = TagType.SECTION
-    TAG_INVERTED_SECTION = TagType.INVERTED_SECTION
-    TAG_VARIABLE = TagType.VARIABLE
-    TAG_VARIABLE_RAW = TagType.VARIABLE_RAW
-    TAG_LITERAL = TagType.LITERAL
-    TAG_PARTIAL = TagType.PARTIAL
-
     for token_type, token_data, token_offset in token_list:
-        if token_type is TOKEN_LITERAL:
+        if token_type is TokenType.LITERAL:
             work_stack[-1].add_child(
-                MustacheTreeNode(TAG_LITERAL, token_data, token_offset)
+                MustacheTreeNode(TagType.LITERAL, token_data, token_offset)
             )
 
-        elif token_type is TOKEN_SECTION or token_type is TOKEN_INVERTED_SECTION:
+        elif token_type is TokenType.SECTION or token_type is TokenType.INVERTED_SECTION:
             tag_type = (
-                TAG_SECTION if token_type is TOKEN_SECTION else TAG_INVERTED_SECTION
+                TagType.SECTION
+                if token_type is TokenType.SECTION
+                else TagType.INVERTED_SECTION
             )
             section_node = MustacheTreeNode(tag_type, token_data, token_offset)
             work_stack[-1].add_child(section_node)
             work_stack_append(section_node)
 
-        elif token_type is TOKEN_END_SECTION:
+        elif token_type is TokenType.END_SECTION:
             if work_stack[-1].data != token_data:
                 raise StrayClosingTagError(f'Opening tag for "{token_data}" not found.')
             work_stack_pop()
 
-        elif token_type is TOKEN_VARIABLE or token_type is TOKEN_RAW_VARIABLE:
+        elif token_type is TokenType.VARIABLE or token_type is TokenType.RAW_VARIABLE:
             tag_type = (
-                TAG_VARIABLE if token_type is TOKEN_VARIABLE else TAG_VARIABLE_RAW
+                TagType.VARIABLE
+                if token_type is TokenType.VARIABLE
+                else TagType.VARIABLE_RAW
             )
             work_stack[-1].add_child(
                 MustacheTreeNode(tag_type, token_data, token_offset)
             )
 
-        elif token_type is TOKEN_COMMENT or token_type is TOKEN_DELIMITER:
+        elif token_type is TokenType.COMMENT or token_type is TokenType.DELIMITER:
             # Comments and delimiters don't add nodes to the tree
             pass
 
-        elif token_type is TOKEN_PARTIAL:
+        elif token_type is TokenType.PARTIAL:
             work_stack[-1].add_child(
-                MustacheTreeNode(TAG_PARTIAL, token_data, token_offset)
+                MustacheTreeNode(TagType.PARTIAL, token_data, token_offset)
             )
         else:
             raise MystaceError

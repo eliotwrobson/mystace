@@ -27,7 +27,7 @@ RenderFunctionT = t.Literal[
     "mstache",
     "mystace-full",
 ]
-TestCaseT = t.Tuple[str, t.Dict[str, int]]
+TestCaseT = t.Tuple[str, t.Dict[str, t.Any]]
 TestCaseGeneratorT = t.Callable[[int], TestCaseT]
 
 

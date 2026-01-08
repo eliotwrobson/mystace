@@ -442,7 +442,9 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
                 MustacheTreeNode(TagType.LITERAL, token_data, token_offset)
             )
 
-        elif token_type is TokenType.SECTION or token_type is TokenType.INVERTED_SECTION:
+        elif (
+            token_type is TokenType.SECTION or token_type is TokenType.INVERTED_SECTION
+        ):
             tag_type = (
                 TagType.SECTION
                 if token_type is TokenType.SECTION

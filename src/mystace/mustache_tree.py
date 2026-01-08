@@ -215,7 +215,7 @@ class MustacheRenderer:
         stringify: t.Callable[[t.Any], str] = str,
         html_escape_fn: t.Callable[[str], str] = html_escape,
     ) -> str:
-        res_list = []
+        res_list: t.List[str] = []
         res_list_append = res_list.append  # Cache method lookup
         starting_context = ContextNode(data)
         last_was_newline = True  # Track if we're at the start of a line
@@ -347,7 +347,7 @@ def process_raw_token_list(
     indices_to_delete: t.Set[int] = set()
     res_token_list: t.List[TokenTuple] = []
     res_token_list_append = res_token_list.append  # Cache method lookup
-    
+
     for i, token in enumerate(raw_token_list):
         token_type, token_data, token_offset = token
 
@@ -432,10 +432,10 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
     work_stack_append = work_stack.append  # Cache method lookup
     work_stack_pop = work_stack.pop  # Cache method lookup
-    
+
     raw_token_list = mustache_tokenizer(thing)
     token_list = process_raw_token_list(raw_token_list)
-    
+
     # Pre-compute type checks for faster branching
     TOKEN_LITERAL = TokenType.LITERAL
     TOKEN_SECTION = TokenType.SECTION
@@ -446,14 +446,14 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
     TOKEN_COMMENT = TokenType.COMMENT
     TOKEN_DELIMITER = TokenType.DELIMITER
     TOKEN_PARTIAL = TokenType.PARTIAL
-    
+
     TAG_SECTION = TagType.SECTION
     TAG_INVERTED_SECTION = TagType.INVERTED_SECTION
     TAG_VARIABLE = TagType.VARIABLE
     TAG_VARIABLE_RAW = TagType.VARIABLE_RAW
     TAG_LITERAL = TagType.LITERAL
     TAG_PARTIAL = TagType.PARTIAL
-    
+
     for token_type, token_data, token_offset in token_list:
         if token_type is TOKEN_LITERAL:
             work_stack[-1].add_child(
@@ -461,7 +461,9 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             )
 
         elif token_type is TOKEN_SECTION or token_type is TOKEN_INVERTED_SECTION:
-            tag_type = TAG_SECTION if token_type is TOKEN_SECTION else TAG_INVERTED_SECTION
+            tag_type = (
+                TAG_SECTION if token_type is TOKEN_SECTION else TAG_INVERTED_SECTION
+            )
             section_node = MustacheTreeNode(tag_type, token_data, token_offset)
             work_stack[-1].add_child(section_node)
             work_stack_append(section_node)
@@ -472,15 +474,17 @@ def create_mustache_tree(thing: str) -> MustacheTreeNode:
             work_stack_pop()
 
         elif token_type is TOKEN_VARIABLE or token_type is TOKEN_RAW_VARIABLE:
-            tag_type = TAG_VARIABLE if token_type is TOKEN_VARIABLE else TAG_VARIABLE_RAW
+            tag_type = (
+                TAG_VARIABLE if token_type is TOKEN_VARIABLE else TAG_VARIABLE_RAW
+            )
             work_stack[-1].add_child(
                 MustacheTreeNode(tag_type, token_data, token_offset)
             )
-            
+
         elif token_type is TOKEN_COMMENT or token_type is TOKEN_DELIMITER:
             # Comments and delimiters don't add nodes to the tree
             pass
-            
+
         elif token_type is TOKEN_PARTIAL:
             work_stack[-1].add_child(
                 MustacheTreeNode(TAG_PARTIAL, token_data, token_offset)

@@ -35,7 +35,7 @@ def mustache_tokenizer(
     tags: t.Tuple[str, str] = (R"{{", R"}}"),
 ) -> t.List[TokenTuple]:
     # Different tokenizers to deal with the stupid delimiter swaps
-    res_list = []
+    res_list: t.List[TokenTuple] = []
     res_list_append = res_list.append  # Cache method lookup
     start_tag, end_tag = tags
     start_tag_len = len(start_tag)  # Cache length
@@ -45,7 +45,7 @@ def mustache_tokenizer(
     cursor_loc = 0
     newline_offset = 0
     seen_tag_in_current_line = False
-    
+
     # Pre-compute TokenTypes to avoid enum lookups
     TOKEN_COMMENT = TokenType.COMMENT
     TOKEN_SECTION = TokenType.SECTION
@@ -75,7 +75,7 @@ def mustache_tokenizer(
             # '&': 'no escape'
             if tag_type_loc >= text_len:
                 raise ex.MystaceError("Tag not closed.")
-            
+
             char = text[tag_type_loc]
             if char == "!":
                 new_token_type = TOKEN_COMMENT

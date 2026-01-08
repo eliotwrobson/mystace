@@ -24,8 +24,7 @@ RenderFunctionT = t.Literal[
     "combustache",
     "moosetash",
     "pystache",
-    "ustache",
-    "ustache-full",
+    "mstache",
     "mystace-full",
 ]
 TestCaseT = t.Tuple[str, t.Dict[str, int]]
@@ -331,15 +330,10 @@ def _run_benchmark(
         import pystache
 
         render_function = pystache.render
-    elif render_function_name == "ustache-full":
-        import ustache
+    elif render_function_name == "mstache":
+        import mstache
 
-        def render_function(x, y):
-            return ustache.render(x, y, cache={})
-    elif render_function_name == "ustache":
-        import ustache
-
-        render_function = ustache.render
+        render_function = mstache.render
     else:
         assert_never(render_function_name)
 

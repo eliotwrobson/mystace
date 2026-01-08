@@ -2,13 +2,19 @@ from typing import Any
 
 LAMBDA = "<lambda>"
 
+# Pre-build translation table for HTML escaping (much faster than multiple replace calls)
+_HTML_ESCAPE_TABLE = str.maketrans(
+    {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+    }
+)
+
 
 def html_escape(s: str) -> str:
-    s = s.replace("&", "&amp;")  # Must be done first!
-    s = s.replace("<", "&lt;")
-    s = s.replace(">", "&gt;")
-    s = s.replace('"', "&quot;")
-    return s
+    return s.translate(_HTML_ESCAPE_TABLE)
 
 
 def is_whitespace(string: str) -> bool:

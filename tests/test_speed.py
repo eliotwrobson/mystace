@@ -24,11 +24,10 @@ RenderFunctionT = t.Literal[
     "combustache",
     "moosetash",
     "pystache",
-    "ustache",
-    "ustache-full",
+    "mstache",
     "mystace-full",
 ]
-TestCaseT = t.Tuple[str, t.Dict[str, int]]
+TestCaseT = t.Tuple[str, t.Dict[str, t.Any]]
 TestCaseGeneratorT = t.Callable[[int], TestCaseT]
 
 
@@ -38,6 +37,24 @@ def generate_test_case_long(n: int) -> TestCaseT:
     template = "".join(r"{{" + name + "}}" for name in names.keys())
 
     return template, names
+
+
+def generate_test_case_simple_variables(n: int) -> TestCaseT:
+    """Simple test case with just variable substitutions."""
+    template = " ".join(f"{{{{var{i}}}}}" for i in range(n))
+    data = {f"var{i}": f"value{i}" for i in range(n)}
+    return template, data
+
+
+def generate_test_case_simple_sections(n: int) -> TestCaseT:
+    """Simple test case with basic sections."""
+    template = ""
+    data = {}
+    for i in range(n):
+        section_name = f"section{i}"
+        template += f"{{{{#{section_name}}}}}content{{{{/{section_name}}}}}"
+        data[section_name] = True
+    return template, data
 
 
 def generate_test_case_nested(n: int) -> TestCaseT:
@@ -331,15 +348,12 @@ def _run_benchmark(
         import pystache
 
         render_function = pystache.render
-    elif render_function_name == "ustache-full":
-        import ustache
+    elif render_function_name == "mstache":
+        import mstache
 
-        def render_function(x, y):
-            return ustache.render(x, y, cache={})
-    elif render_function_name == "ustache":
-        import ustache
-
-        render_function = ustache.render
+        # mstache.render() uses a default LRU cache for tokenization
+        # so repeated calls benefit from caching automatically
+        render_function = mstache.render
     else:
         assert_never(render_function_name)
 
@@ -370,6 +384,8 @@ def _run_benchmark(
         generate_test_case_nested,
         generate_test_case_long,
         generate_test_case_random(1),
+        generate_test_case_simple_variables,
+        generate_test_case_simple_sections,
     ],
 )
 @pytest.mark.parametrize("render_function_name", t.get_args(RenderFunctionT))

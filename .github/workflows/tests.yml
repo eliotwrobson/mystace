@@ -2,9 +2,14 @@ name: tests
 
 on:
   push:
-    branches: ["*"]
+    branches: ["main"]
   pull_request:
     branches: ["*"]
+
+# Cancel duplicate jobs when pushing to a PR branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:

@@ -28,6 +28,16 @@ _STANDALONE_TOKENS = (
     TokenType.DELIMITER,
 )
 
+# Pre-compute common space strings for indentation (avoids repeated multiplication)
+_SPACE_CACHE = [""] + [" " * i for i in range(1, 33)]  # Cache up to 32 spaces
+
+
+def _get_spaces(n: int) -> str:
+    """Get n spaces, using cache when possible."""
+    if n < len(_SPACE_CACHE):
+        return _SPACE_CACHE[n]
+    return " " * n
+
 
 class ContextNode:
     __slots__ = ("context", "parent_context_node")
@@ -47,6 +57,7 @@ class ContextNode:
         if key == ".":
             return self.context
 
+        # Use iterator to avoid copying keys
         chain_iter = iter(key.split("."))
         curr_ctx = self.context
         parent_node = self.parent_context_node
@@ -97,17 +108,11 @@ class ContextNode:
 
         # In the case of the list, need a new context for each item
         if isinstance(new_context, list):
-            res_list = []
-
-            for item in new_context:
-                new_stack = ContextNode(item, self)
-                # new_stack.parent_context_node = self
-                res_list.append(new_stack)
-
+            # Pre-allocate list for better performance
+            res_list = [ContextNode(item, self) for item in new_context]
             return res_list
 
-        new_stack = ContextNode(new_context, self)
-        return [new_stack]
+        return [ContextNode(new_context, self)]
 
 
 class TagType(enum.Enum):
@@ -186,6 +191,7 @@ class MustacheTreeNode:
 class MustacheRenderer:
     mustache_tree: MustacheTreeNode
     partials_dict: t.Dict[str, MustacheTreeNode]
+    __slots__ = ("mustache_tree", "partials_dict")
 
     def __init__(
         self,
@@ -209,7 +215,8 @@ class MustacheRenderer:
         stringify: t.Callable[[t.Any], str] = str,
         html_escape_fn: t.Callable[[str], str] = html_escape,
     ) -> str:
-        res_list = []
+        res_list: t.List[str] = []
+        res_list_append = res_list.append  # Cache method lookup
         starting_context = ContextNode(data)
         last_was_newline = True  # Track if we're at the start of a line
 
@@ -220,10 +227,12 @@ class MustacheRenderer:
             (node, starting_context, self.mustache_tree.offset)
             for node in self.mustache_tree.children
         )
+        work_deque_popleft = work_deque.popleft  # Cache method lookup
+        work_deque_appendleft = work_deque.appendleft  # Cache method lookup
         while work_deque:
-            curr_node, curr_context, curr_offset = work_deque.popleft()
+            curr_node, curr_context, curr_offset = work_deque_popleft()
             if curr_node.tag_type is TagType.LITERAL:
-                res_list.append(curr_node.data)
+                res_list_append(curr_node.data)
                 last_was_newline = curr_node.data.endswith("\n")
 
                 # Add offset for partials after newline, but only if there's
@@ -231,7 +240,7 @@ class MustacheRenderer:
                 if last_was_newline and curr_offset > 0:
                     # Check if the next node also has the same offset
                     if work_deque and work_deque[0][2] == curr_offset:
-                        res_list.append(curr_offset * " ")
+                        res_list_append(_get_spaces(curr_offset))
 
             elif (
                 curr_node.tag_type is TagType.VARIABLE
@@ -246,7 +255,7 @@ class MustacheRenderer:
                     if curr_node.tag_type is TagType.VARIABLE:
                         str_content = html_escape_fn(str_content)
 
-                    res_list.append(str_content)
+                    res_list_append(str_content)
             elif curr_node.tag_type is TagType.SECTION:
                 new_context_stacks = curr_context.open_section(curr_node.data)
 
@@ -255,7 +264,7 @@ class MustacheRenderer:
                 for new_context_stack in reversed(new_context_stacks):
                     for child_node in reversed(curr_node.children):
                         # No need to make a copy of the context per-child, it's immutable
-                        work_deque.appendleft((child_node, new_context_stack, 0))
+                        work_deque_appendleft((child_node, new_context_stack, 0))
 
             elif curr_node.tag_type is TagType.INVERTED_SECTION:
                 # No need to add to the context stack, inverted sections
@@ -266,7 +275,7 @@ class MustacheRenderer:
 
                 if not bool(lookup_data):
                     for child_node in reversed(curr_node.children):
-                        work_deque.appendleft((child_node, curr_context, 0))
+                        work_deque_appendleft((child_node, curr_context, 0))
 
             elif curr_node.tag_type is TagType.PARTIAL:
                 partial_tree = self.partials_dict.get(curr_node.data)
@@ -279,12 +288,12 @@ class MustacheRenderer:
                 # For standalone partials, add indentation at the beginning
                 # Only add if we're at the start of a line (last output was newline)
                 if curr_node.offset > 0 and last_was_newline:
-                    res_list.append(curr_node.offset * " ")
+                    res_list_append(_get_spaces(curr_node.offset))
                     last_was_newline = False
 
                 # Propagate the combined offset through the partial content
                 for child_node in reversed(partial_tree.children):
-                    work_deque.appendleft(
+                    work_deque_appendleft(
                         (child_node, curr_context, curr_offset + curr_node.offset)
                     )
 
@@ -337,6 +346,8 @@ def process_raw_token_list(
 ) -> t.List[TokenTuple]:
     indices_to_delete: t.Set[int] = set()
     res_token_list: t.List[TokenTuple] = []
+    res_token_list_append = res_token_list.append  # Cache method lookup
+
     for i, token in enumerate(raw_token_list):
         token_type, token_data, token_offset = token
 
@@ -402,14 +413,16 @@ def process_raw_token_list(
             if remove_double_prev:
                 indices_to_delete.add(i - 2)
 
-        res_token_list.append(token)
+        res_token_list_append(token)
 
     handle_final_line_clear(res_token_list, _STANDALONE_TOKENS)
     # Don't require a trailing newline to remove leading whitespace.
 
-    res_token_list = [
-        elem for i, elem in enumerate(res_token_list) if i not in indices_to_delete
-    ]
+    # Only filter if we have deletions to avoid unnecessary list creation
+    if indices_to_delete:
+        res_token_list = [
+            elem for i, elem in enumerate(res_token_list) if i not in indices_to_delete
+        ]
 
     return res_token_list
 
@@ -417,52 +430,53 @@ def process_raw_token_list(
 def create_mustache_tree(thing: str) -> MustacheTreeNode:
     root = MustacheTreeNode(TagType.ROOT, "", 0)
     work_stack: t.Deque[MustacheTreeNode] = deque([root])
+    work_stack_append = work_stack.append  # Cache method lookup
+    work_stack_pop = work_stack.pop  # Cache method lookup
+
     raw_token_list = mustache_tokenizer(thing)
     token_list = process_raw_token_list(raw_token_list)
-    for token_type, token_data, token_offset in token_list:
-        # token_data = token_data.decode("utf-8")
-        if token_type is TokenType.LITERAL:
-            literal_node = MustacheTreeNode(TagType.LITERAL, token_data, token_offset)
-            work_stack[-1].add_child(literal_node)
 
-        elif token_type in [TokenType.SECTION, TokenType.INVERTED_SECTION]:
+    for token_type, token_data, token_offset in token_list:
+        if token_type is TokenType.LITERAL:
+            work_stack[-1].add_child(
+                MustacheTreeNode(TagType.LITERAL, token_data, token_offset)
+            )
+
+        elif (
+            token_type is TokenType.SECTION or token_type is TokenType.INVERTED_SECTION
+        ):
             tag_type = (
                 TagType.SECTION
                 if token_type is TokenType.SECTION
                 else TagType.INVERTED_SECTION
             )
             section_node = MustacheTreeNode(tag_type, token_data, token_offset)
-            # Add section to list of children
             work_stack[-1].add_child(section_node)
-
-            # Add section to work stack and descend in on the next iteration.
-            work_stack.append(section_node)
+            work_stack_append(section_node)
 
         elif token_type is TokenType.END_SECTION:
             if work_stack[-1].data != token_data:
                 raise StrayClosingTagError(f'Opening tag for "{token_data}" not found.')
+            work_stack_pop()
 
-            # Close the current section by popping off the end of the work stack.
-            work_stack.pop()
-
-        elif token_type in [TokenType.VARIABLE, TokenType.RAW_VARIABLE]:
+        elif token_type is TokenType.VARIABLE or token_type is TokenType.RAW_VARIABLE:
             tag_type = (
                 TagType.VARIABLE
                 if token_type is TokenType.VARIABLE
                 else TagType.VARIABLE_RAW
             )
-            variable_node = MustacheTreeNode(tag_type, token_data, token_offset)
-            # Add section to list of children
+            work_stack[-1].add_child(
+                MustacheTreeNode(tag_type, token_data, token_offset)
+            )
 
-            work_stack[-1].add_child(variable_node)
-        elif token_type is TokenType.COMMENT:
+        elif token_type is TokenType.COMMENT or token_type is TokenType.DELIMITER:
+            # Comments and delimiters don't add nodes to the tree
             pass
-        elif token_type is TokenType.DELIMITER:
-            # Delimiters don't add nodes to the tree, they're handled during tokenization
-            pass
+
         elif token_type is TokenType.PARTIAL:
-            partial_node = MustacheTreeNode(TagType.PARTIAL, token_data, token_offset)
-            work_stack[-1].add_child(partial_node)
+            work_stack[-1].add_child(
+                MustacheTreeNode(TagType.PARTIAL, token_data, token_offset)
+            )
         else:
             raise MystaceError
 

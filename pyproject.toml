@@ -7,10 +7,6 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["more-itertools>=8", "typing-extensions>=4.15.0"]
-
-[project.urls]
-Repository = "https://github.com/eliot-robson/mystace"
-
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "License :: OSI Approved :: MIT License",
@@ -21,6 +17,9 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
   "Topic :: Text Processing :: Markup",
 ]
+
+[project.urls]
+Repository = "https://github.com/eliot-robson/mystace"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
